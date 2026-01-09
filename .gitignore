@@ -1,4 +1,6 @@
-# Logs
+# ======================
+# FRONTEND (React)
+# ======================
 logs
 *.log
 npm-debug.log*
@@ -12,7 +14,9 @@ dist
 dist-ssr
 *.local
 
-# Editor directories and files
+# ======================
+# IDE / SYSTEM
+# ======================
 .vscode/*
 !.vscode/extensions.json
 .idea
@@ -22,3 +26,27 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# ======================
+# BACKEND (Java / Spring)
+# ======================
+*.class
+
+# BlueJ files
+*.ctxt
+
+# Mobile Tools for Java (J2ME)
+.mtj.tmp/
+
+# Package Files
+*.jar
+*.war
+*.nar
+*.ear
+*.zip
+*.tar.gz
+*.rar
+
+# JVM crash logs
+hs_err_pid*
+replay_pid*
