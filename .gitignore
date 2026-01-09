@@ -1,6 +1,5 @@
-# ======================
-# FRONTEND (React)
-# ======================
+<<<<<<< HEAD
+# Logs
 logs
 *.log
 npm-debug.log*
@@ -14,9 +13,7 @@ dist
 dist-ssr
 *.local
 
-# ======================
-# IDE / SYSTEM
-# ======================
+# Editor directories and files
 .vscode/*
 !.vscode/extensions.json
 .idea
@@ -26,11 +23,12 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
-
-# ======================
-# BACKEND (Java / Spring)
-# ======================
+=======
+# Compiled class file
 *.class
+
+# Log file
+*.log
 
 # BlueJ files
 *.ctxt
@@ -38,7 +36,7 @@ dist-ssr
 # Mobile Tools for Java (J2ME)
 .mtj.tmp/
 
-# Package Files
+# Package Files #
 *.jar
 *.war
 *.nar
@@ -47,6 +45,7 @@ dist-ssr
 *.tar.gz
 *.rar
 
-# JVM crash logs
+# virtual machine crash logs, see http://www.java.com/en/download/help/error_hotspot.xml
 hs_err_pid*
 replay_pid*
+>>>>>>> 718bc69a0a1af4cd4d4f83f70e0138ba08a6eac9
