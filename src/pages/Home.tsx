@@ -4,6 +4,8 @@ import Hero from "../components/Hero";
 import ServicesSection from "../components/ServicesSection";
 import HowItWorksSection from "../components/HowItWorksSection";
 import StatsSection from "../components/StatsSection";
+import Footer from "../components/Footer";
+
 
 import type { Service } from "../types/service";
 import type { Step } from "../types/step";
@@ -50,10 +52,10 @@ const Home = () => {
   ];
 
   const steps: Step[] = [
-    { id: 1, title: "Recherchez", description: "Trouvez l’artisan adapté.", icon: <Search color="white" />, color: "#3B82F6" },
-    { id: 2, title: "Comparez", description: "Comparez avis et tarifs.", icon: <Users color="white" />, color: "#A855F7" },
-    { id: 3, title: "Contactez", description: "Demandez un devis.", icon: <MessageSquare color="white" />, color: "#F97316" },
-    { id: 4, title: "Réalisez", description: "Travaux réalisés.", icon: <CheckCircle color="white" />, color: "#22C55E" },
+    { id: 1, title: "Recherchez", description: "Trouvez l'artisan qui correspond à vos besoins parmi notre réseau de professionnels qualifiés.", icon: <Search color="white" />, color: "#3B82F6" },
+    { id: 2, title: "Comparez", description: "Consultez les profils, les avis clients et les tarifs pour choisir le meilleur artisan.", icon: <Users color="white" />, color: "#A855F7" },
+    { id: 3, title: "Contactez", description: "Envoyez une demande de devis gratuite et recevez une réponse rapide sous 24-48h.", icon: <MessageSquare color="white" />, color: "#F97316" },
+    { id: 4, title: "Réalisez", description: "L'artisan intervient chez vous et réalise vos travaux dans les meilleurs délais.", icon: <CheckCircle color="white" />, color: "#22C55E" },
   ];
 
   const stats: Stat[] = [
@@ -75,13 +77,13 @@ const Home = () => {
 
       <Hero
         title="Trouvez l’artisan qu’il vous faut"
-        subtitle="Des professionnels qualifiés près de chez vous"
+        subtitle="Plombiers, serruriers, électriciens, peintres... Des professionnels qualifiés près de chez vous"
         popularSearches={["Plomberie", "Serrurerie", "Électricité"]}
         onSearch={(value) => navigate(`/artisans?search=${value}`)}
       />
 
       <ServicesSection
-        title="Tous les services"
+        title="Tous les services dont vous avez besoin"
         services={services}
         onServiceClick={(s) => navigate(`/artisans?service=${s.name}`)}
       />
@@ -92,6 +94,10 @@ const Home = () => {
       />
 
       <StatsSection stats={stats} />
+
+      <div className="h-24 bg-white" />
+
+      <Footer />
     </>
   );
 };
