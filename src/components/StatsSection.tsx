@@ -7,8 +7,8 @@ type StatsSectionProps = {
 
 const StatsSection = ({ stats }: StatsSectionProps) => {
   return (
-    <section className="bg-gradient-to-r from-blue-600 to-indigo-600 py-16">
-      <div className="max-w-7xl mx-auto px-6 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-10">
+    <section className="bg-gradient-to-r from-blue-600 to-indigo-600 py-12">
+      <div className="max-w-7xl mx-auto px-6 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-8">
         {stats.map((stat) => (
           <StatCard key={stat.id} stat={stat} />
         ))}

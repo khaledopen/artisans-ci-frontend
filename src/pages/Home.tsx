@@ -6,7 +6,6 @@ import HowItWorksSection from "../components/HowItWorksSection";
 import StatsSection from "../components/StatsSection";
 import Footer from "../components/Footer";
 
-
 import type { Service } from "../types/service";
 import type { Step } from "../types/step";
 import type { Stat } from "../types/stat";
@@ -52,10 +51,10 @@ const Home = () => {
   ];
 
   const steps: Step[] = [
-    { id: 1, title: "Recherchez", description: "Trouvez l'artisan qui correspond à vos besoins parmi notre réseau de professionnels qualifiés.", icon: <Search color="white" />, color: "#3B82F6" },
-    { id: 2, title: "Comparez", description: "Consultez les profils, les avis clients et les tarifs pour choisir le meilleur artisan.", icon: <Users color="white" />, color: "#A855F7" },
-    { id: 3, title: "Contactez", description: "Envoyez une demande de devis gratuite et recevez une réponse rapide sous 24-48h.", icon: <MessageSquare color="white" />, color: "#F97316" },
-    { id: 4, title: "Réalisez", description: "L'artisan intervient chez vous et réalise vos travaux dans les meilleurs délais.", icon: <CheckCircle color="white" />, color: "#22C55E" },
+    { id: 1, title: "Recherchez", description: "Trouvez l’artisan adapté à vos besoins.", icon: <Search color="white" />, color: "#3B82F6" },
+    { id: 2, title: "Comparez", description: "Comparez profils, avis et tarifs.", icon: <Users color="white" />, color: "#A855F7" },
+    { id: 3, title: "Contactez", description: "Envoyez une demande de devis gratuite.", icon: <MessageSquare color="white" />, color: "#F97316" },
+    { id: 4, title: "Réalisez", description: "L’artisan intervient rapidement.", icon: <CheckCircle color="white" />, color: "#22C55E" },
   ];
 
   const stats: Stat[] = [
@@ -67,37 +66,52 @@ const Home = () => {
 
   return (
     <>
+      {/* top anchor */}
+      <div id="top" />
+
       <Navbar
         brand="ArtisanCI"
         links={[
-          { label: "Services", path: "/" },
+          { label: "Services", targetId: "services" },
           { label: "Trouver un artisan", path: "/artisans" },
+          { label: "Comment ça marche", targetId: "how-it-works" },
+          { label: "Contact", targetId: "contact" },
         ]}
       />
 
-      <Hero
-        title="Trouvez l’artisan qu’il vous faut"
-        subtitle="Plombiers, serruriers, électriciens, peintres... Des professionnels qualifiés près de chez vous"
-        popularSearches={["Plomberie", "Serrurerie", "Électricité"]}
-        onSearch={(value) => navigate(`/artisans?search=${value}`)}
-      />
+      {/* HERO */}
+      <div className="pt-2">
+        <Hero
+          title="Trouvez l’artisan qu’il vous faut"
+          subtitle="Plombiers, serruriers, électriciens, peintres… Des professionnels qualifiés près de chez vous"
+          popularSearches={["Plomberie", "Serrurerie", "Électricité"]}
+          onSearch={(value) => navigate(`/artisans?search=${value}`)}
+        />
+      </div>
 
-      <ServicesSection
-        title="Tous les services dont vous avez besoin"
-        services={services}
-        onServiceClick={(s) => navigate(`/artisans?service=${s.name}`)}
-      />
+      {/* SERVICES */}
+      <section id="services" className="scroll-mt-24 py-12">
+        <ServicesSection
+          title="Tous les services dont vous avez besoin"
+          services={services}
+          onServiceClick={(s) => navigate(`/artisans?service=${s.name}`)}
+        />
+      </section>
 
-      <HowItWorksSection
-        title="Comment ça marche ?"
-        steps={steps}
-      />
+      {/* HOW IT WORKS */}
+      <section id="how-it-works" className="scroll-mt-24 py-12">
+        <HowItWorksSection title="Comment ça marche ?" steps={steps} />
+      </section>
 
-      <StatsSection stats={stats} />
+      {/* STATS */}
+      <section className="py-12">
+        <StatsSection stats={stats} />
+      </section>
 
-      <div className="h-24 bg-white" />
-
-      <Footer />
+      {/* FOOTER / CONTACT */}
+      <section id="contact" className="scroll-mt-24 pt-8">
+        <Footer />
+      </section>
     </>
   );
 };

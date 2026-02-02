@@ -11,13 +11,13 @@ import {
 const Footer = () => {
   return (
     <footer className="bg-gradient-to-b from-[#0b1220] to-[#0a1020] text-gray-300">
-      
+
       {/* CONTENU PRINCIPAL */}
-      <div className="max-w-7xl mx-auto px-6 py-16 grid grid-cols-1 md:grid-cols-4 gap-10">
+      <div className="max-w-7xl mx-auto px-6 pt-12 pb-14 grid grid-cols-1 md:grid-cols-4 gap-8">
 
         {/* BRAND */}
         <div>
-          <div className="flex items-center gap-3 mb-4">
+          <div className="flex items-center gap-3 mb-3">
             <div className="w-10 h-10 rounded-lg bg-blue-600 flex items-center justify-center text-white font-bold">
               A
             </div>
@@ -26,7 +26,7 @@ const Footer = () => {
             </span>
           </div>
 
-          <p className="text-sm leading-relaxed mb-6">
+          <p className="text-sm leading-relaxed mb-5">
             La plateforme qui connecte les artisans professionnels
             avec les clients à la recherche de services de qualité.
           </p>
@@ -41,10 +41,10 @@ const Footer = () => {
 
         {/* SERVICES */}
         <div>
-          <h4 className="text-white font-semibold mb-4">
+          <h4 className="text-white font-semibold mb-3">
             Services
           </h4>
-          <ul className="space-y-3 text-sm">
+          <ul className="space-y-2 text-sm">
             <li className="hover:text-white cursor-pointer">Plomberie</li>
             <li className="hover:text-white cursor-pointer">Électricité</li>
             <li className="hover:text-white cursor-pointer">Serrurerie</li>
@@ -55,10 +55,10 @@ const Footer = () => {
 
         {/* ENTREPRISE */}
         <div>
-          <h4 className="text-white font-semibold mb-4">
+          <h4 className="text-white font-semibold mb-3">
             Entreprise
           </h4>
-          <ul className="space-y-3 text-sm">
+          <ul className="space-y-2 text-sm">
             <li className="hover:text-white cursor-pointer">À propos</li>
             <li className="hover:text-white cursor-pointer">Devenir artisan</li>
             <li className="hover:text-white cursor-pointer">Blog</li>
@@ -69,11 +69,11 @@ const Footer = () => {
 
         {/* CONTACT */}
         <div>
-          <h4 className="text-white font-semibold mb-4">
+          <h4 className="text-white font-semibold mb-3">
             Contact
           </h4>
 
-          <ul className="space-y-4 text-sm">
+          <ul className="space-y-3 text-sm">
             <li className="flex items-center gap-3">
               <Mail className="w-4 h-4 text-blue-500" />
               contact@artisanci.ci
@@ -97,8 +97,8 @@ const Footer = () => {
 
       {/* BARRE DU BAS */}
       <div className="border-t border-white/10">
-        <div className="max-w-7xl mx-auto px-6 py-6 flex flex-col md:flex-row justify-between items-center gap-4 text-sm text-gray-400">
-          
+        <div className="max-w-7xl mx-auto px-6 py-4 flex flex-col md:flex-row justify-between items-center gap-3 text-sm text-gray-400">
+
           <span>
             © 2026 ArtisanCI. Tous droits réservés.
           </span>

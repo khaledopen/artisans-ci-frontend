@@ -13,12 +13,12 @@ const HowItWorksSection = ({
   steps,
 }: HowItWorksSectionProps) => {
   return (
-    <section className="py-20 bg-white">
+    <section className="bg-white pt-12 pb-14">
       <div className="max-w-7xl mx-auto px-6">
 
         {/* Titre */}
-        <div className="text-center mb-14">
-          <h2 className="text-3xl font-bold mb-3">
+        <div className="text-center mb-10">
+          <h2 className="text-3xl font-bold mb-2">
             {title}
           </h2>
           {subtitle && (

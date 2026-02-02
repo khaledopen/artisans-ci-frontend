@@ -1,8 +1,6 @@
 import ServiceCard from "./ServiceCard";
 import type { Service } from "../types/service";
 
-
-
 type ServicesSectionProps = {
   title: string;
   subtitle?: string;
@@ -17,12 +15,12 @@ const ServicesSection = ({
   onServiceClick,
 }: ServicesSectionProps) => {
   return (
-    <section className="py-20 bg-gray-50">
+    <section className="bg-gray-50 pt-12 pb-14">
       <div className="max-w-7xl mx-auto px-6">
 
         {/* Titre */}
-        <div className="text-center mb-12">
-          <h2 className="text-3xl font-bold mb-3">
+        <div className="text-center mb-8">
+          <h2 className="text-3xl font-bold mb-2">
             {title}
           </h2>
           {subtitle && (
