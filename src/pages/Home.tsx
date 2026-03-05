@@ -51,10 +51,10 @@ const Home = () => {
   ];
 
   const steps: Step[] = [
-    { id: 1, title: "Recherchez", description: "Trouvez l’artisan adapté à vos besoins.", icon: <Search color="white" />, color: "#3B82F6" },
-    { id: 2, title: "Comparez", description: "Comparez profils, avis et tarifs.", icon: <Users color="white" />, color: "#A855F7" },
-    { id: 3, title: "Contactez", description: "Envoyez une demande de devis gratuite.", icon: <MessageSquare color="white" />, color: "#F97316" },
-    { id: 4, title: "Réalisez", description: "L’artisan intervient rapidement.", icon: <CheckCircle color="white" />, color: "#22C55E" },
+    { id: 1, title: "Recherchez", description: "Trouvez l'artisan qui correspond à vos besoins parmi notre réseau de professionnels qualifiés.", icon: <Search color="white" />, color: "#3B82F6" },
+    { id: 2, title: "Comparez", description: "Consultez les profils, les avis clients et les tarifs pour choisir le meilleur artisan.", icon: <Users color="white" />, color: "#A855F7" },
+    { id: 3, title: "Contactez", description: "Envoyez une demande de devis gratuite et recevez une réponse rapide sous 24-48h.", icon: <MessageSquare color="white" />, color: "#F97316" },
+    { id: 4, title: "Réalisez", description: "L'artisan intervient chez vous et réalise vos travaux dans les meilleurs délais.", icon: <CheckCircle color="white" />, color: "#22C55E" },
   ];
 
   const stats: Stat[] = [
@@ -66,7 +66,7 @@ const Home = () => {
 
   return (
     <>
-      {/* top anchor */}
+      
       <div id="top" />
 
       <Navbar
@@ -98,7 +98,7 @@ const Home = () => {
         />
       </section>
 
-      {/* HOW IT WORKS */}
+      {/* comment ça marche ? */}
       <section id="how-it-works" className="scroll-mt-24 py-12">
         <HowItWorksSection title="Comment ça marche ?" steps={steps} />
       </section>
