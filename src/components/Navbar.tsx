@@ -1,9 +1,9 @@
-import { useLocation, useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 
 type NavItem = {
   label: string;
-  targetId?: string; // scroll interne
-  path?: string;     // navigation route
+  targetId?: string;
+  path?: string;
 };
 
 type NavbarProps = {
@@ -16,19 +16,29 @@ const Navbar = ({ brand, links, showAuthButtons = true }: NavbarProps) => {
   const navigate = useNavigate();
   const location = useLocation();
 
-  const handleClick = (link: NavItem) => {
-    // Scroll UNIQUEMENT si on est sur Home
-    if (link.targetId && location.pathname === "/") {
-      const el = document.getElementById(link.targetId);
-      if (el) {
-        el.scrollIntoView({ behavior: "smooth" });
-      }
+  const handleNavigation = (link: NavItem) => {
+
+    // navigation vers une autre page
+    if (link.path) {
+      navigate(link.path);
       return;
     }
 
-    // Sinon navigation classique
-    if (link.path) {
-      navigate(link.path);
+    // navigation vers une section
+    if (link.targetId) {
+
+      // si on n'est pas sur la home
+      if (location.pathname !== "/") {
+        navigate("/");
+        setTimeout(() => {
+          const element = document.getElementById(link.targetId!);
+          element?.scrollIntoView({ behavior: "smooth" });
+        }, 100);
+      } 
+      else {
+        const element = document.getElementById(link.targetId);
+        element?.scrollIntoView({ behavior: "smooth" });
+      }
     }
   };
 
@@ -44,6 +54,7 @@ const Navbar = ({ brand, links, showAuthButtons = true }: NavbarProps) => {
           <div className="w-9 h-9 rounded-lg bg-blue-600 flex items-center justify-center text-white font-bold">
             A
           </div>
+
           <span className="text-xl font-semibold text-gray-900">
             {brand}
           </span>
@@ -54,7 +65,7 @@ const Navbar = ({ brand, links, showAuthButtons = true }: NavbarProps) => {
           {links.map((link) => (
             <button
               key={link.label}
-              onClick={() => handleClick(link)}
+              onClick={() => handleNavigation(link)}
               className="hover:text-blue-600 transition"
             >
               {link.label}
@@ -62,9 +73,10 @@ const Navbar = ({ brand, links, showAuthButtons = true }: NavbarProps) => {
           ))}
         </nav>
 
-        {/* Auth buttons */}
+        {/* Auth */}
         {showAuthButtons && (
           <div className="flex items-center gap-4">
+
             <button
               onClick={() => navigate("/register")}
               className="px-5 py-2 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-100"
@@ -78,6 +90,7 @@ const Navbar = ({ brand, links, showAuthButtons = true }: NavbarProps) => {
             >
               Se connecter
             </button>
+
           </div>
         )}
       </div>
