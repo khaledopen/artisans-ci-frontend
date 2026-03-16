@@ -14,7 +14,7 @@ const ArtisanProfile = () => {
 
   const artisan = {
     id,
-    name: "Pierre Martin",
+    name: "Kouassi Pierre",
     role: "Plombier certifié",
     rating: 4.9,
     reviews: 127,
@@ -22,7 +22,7 @@ const ArtisanProfile = () => {
     description:
       "Artisan plombier avec plus de 12 ans d'expérience dans la réparation et l'installation sanitaire.",
     experience: 12,
-    pricePerHour: 55,
+    pricePerHour: 2500,
     avatar: "https://i.pravatar.cc/300?img=12",
   };
 
@@ -101,7 +101,7 @@ const ArtisanProfile = () => {
             <div className="mt-6">
               <span className="text-gray-500">Tarif moyen</span>
               <p className="text-2xl font-bold text-blue-600">
-                {artisan.pricePerHour} €/h
+                {artisan.pricePerHour} Francs/h
               </p>
             </div>
 

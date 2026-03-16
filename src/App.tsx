@@ -4,6 +4,8 @@ import Artisans from "./pages/Artisans";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import Dashboard from "./pages/Dashboard"; 
+import ArtisanProfile from "./pages/ArtisanProfile";
+
 
 function App() {
   return (
@@ -13,6 +15,7 @@ function App() {
       <Route path="/login" element={<Login />} />
       <Route path="/register" element={<Register />} />
       <Route path="/admin" element={<Dashboard />} /> 
+      <Route path="/artisan/:id" element={<ArtisanProfile />} />
     </Routes>
   );
 }
