@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
@@ -14,10 +14,79 @@ const Artisans = () => {
 
   const [search, setSearch] = useState(searchParam);
 
+  // 🔥 GEOLOCALISATION
+  const [location, setLocation] = useState<{
+    lat: number;
+    lng: number;
+  } | null>(null);
+
+  const [error, setError] = useState("");
+
+  // 🔥 ADRESSE (ville + commune)
+  const [address, setAddress] = useState<{
+    city: string;
+    commune: string;
+  } | null>(null);
+
+  // 🔥 API reverse geocoding
+  const getAddress = async (lat: number, lng: number) => {
+    try {
+      const res = await fetch(
+        `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`
+      );
+
+      const data = await res.json();
+
+      return {
+        city:
+          data.address.city ||
+          data.address.town ||
+          data.address.village ||
+          "",
+        commune:
+          data.address.suburb ||
+          data.address.neighbourhood ||
+          "",
+      };
+    } catch (error) {
+      console.log(error);
+      return null;
+    }
+  };
+
+  const getLocation = () => {
+    if (!navigator.geolocation) {
+      setError("La géolocalisation n'est pas supportée");
+      return;
+    }
+
+    navigator.geolocation.getCurrentPosition(
+      async (position) => {
+        const lat = position.coords.latitude;
+        const lng = position.coords.longitude;
+
+        setLocation({ lat, lng });
+        setError("");
+
+        // 🔥 récupérer ville + commune
+        const addr = await getAddress(lat, lng);
+        if (addr) setAddress(addr);
+      },
+      () => {
+        setError("📍 Activez votre localisation pour voir les artisans proches");
+      }
+    );
+  };
+
+  useEffect(() => {
+    getLocation();
+  }, []);
+
+  // 🔍 FILTRE RECHERCHE
   const artisans: Artisan[] = [
     {
       id: 1,
-      name: "kouassi pierre",
+      name: "Kouassi Pierre",
       role: "Plombier certifié",
       rating: 4.9,
       reviews: 127,
@@ -50,7 +119,7 @@ const Artisans = () => {
       city: "Abidjan",
       description: "Installation électrique et dépannage",
       experience: 8,
-      pricePerHour: 45,
+      pricePerHour: 4500,
       verified: true,
       avatar: "https://i.pravatar.cc/150?img=25",
     },
@@ -78,12 +147,37 @@ const Artisans = () => {
 
       <div className="max-w-7xl mx-auto px-6 py-16">
 
-        {/* Titre */}
+        {/* TITRE */}
         <h1 className="text-3xl font-bold mb-6">
           Nos artisans
         </h1>
 
-        {/* Barre de recherche */}
+        {/* 📍 LOCALISATION */}
+        {address && (
+          <p className="mb-6 text-sm text-gray-500">
+            📍 {address.commune || address.city}, {address.city}
+          </p>
+        )}
+
+        {/* ❌ ERREUR */}
+        {error && (
+          <div className="mb-6 text-center">
+            <p className="text-red-500 mb-3">{error}</p>
+            <button
+              onClick={getLocation}
+              className="bg-blue-600 text-white px-4 py-2 rounded-lg"
+            >
+              Réessayer
+            </button>
+          </div>
+        )}
+
+        {/* 🔄 LOADING */}
+        {!location && !error && (
+          <p className="mb-6">📡 Récupération de votre position...</p>
+        )}
+
+        {/* 🔎 SEARCH */}
         <input
           className="w-full bg-gray-100 px-4 py-3 rounded-xl mb-10"
           placeholder="Rechercher par nom, spécialité ou ville..."
@@ -91,7 +185,7 @@ const Artisans = () => {
           onChange={(e) => setSearch(e.target.value)}
         />
 
-        {/* Liste artisans */}
+        {/* 📋 LISTE */}
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
           {filtered.map((artisan) => (
             <div
