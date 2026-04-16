@@ -1,56 +1,102 @@
+// src/pages/Register.tsx
+
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Navbar from "../components/Navbar";
-import { User, Briefcase } from "lucide-react";
+import { User, Briefcase, MapPin, Loader2, CheckCircle, AlertCircle } from "lucide-react";
+import { registerClient, registerArtisan } from "../api/auth.api";
 
 type Role = "CLIENT" | "ARTISAN";
 
 const Register = () => {
   const navigate = useNavigate();
   const [role, setRole] = useState<Role | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
 
   const [form, setForm] = useState({
-    name: "",
+    // Champs communs
+    nom: "",
+    prenom: "",
     email: "",
-    password: "",
+    motpasse: "",
     confirmPassword: "",
-    job: "", // métier (artisan uniquement)
+    localisation: "Abidjan", // Ville par défaut
+    commune: "Cocody",       // Commune par défaut
+    
+    // Champs artisan uniquement
+    metierId: 1,
   });
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
+    setError("");
+    setSuccess("");
+
     if (!role) {
-      alert("Veuillez choisir un type de compte");
+      setError("Veuillez choisir un type de compte");
       return;
     }
 
-    if (!form.name || !form.email || !form.password) {
-      alert("Tous les champs sont obligatoires");
+    if (!form.nom || !form.prenom || !form.email || !form.motpasse) {
+      setError("Tous les champs sont obligatoires");
       return;
     }
 
-    if (role === "ARTISAN" && !form.job) {
-      alert("Veuillez préciser votre métier");
+    if (form.motpasse !== form.confirmPassword) {
+      setError("Les mots de passe ne correspondent pas");
       return;
     }
 
-    if (form.password !== form.confirmPassword) {
-      alert("Les mots de passe ne correspondent pas");
+    if (form.motpasse.length < 6) {
+      setError("Le mot de passe doit contenir au moins 6 caractères");
       return;
     }
 
-    const payload = {
-      name: form.name,
-      email: form.email,
-      password: form.password,
-      role,
-      job: role === "ARTISAN" ? form.job : null,
-    };
+    setLoading(true);
 
-    console.log("Données envoyées :", payload);
-    alert("Inscription réussie (simulation)");
+    try {
+      let response;
 
-    // Plus tard : navigate selon le rôle
-    // navigate(role === "ARTISAN" ? "/artisan/dashboard" : "/client/dashboard");
+      if (role === "CLIENT") {
+        response = await registerClient({
+          nom: form.nom,
+          prenom: form.prenom,
+          email: form.email,
+          motpasse: form.motpasse,
+          localisation: form.localisation,
+        });
+      } else {
+        response = await registerArtisan({
+          nom: form.nom,
+          prenom: form.prenom,
+          email: form.email,
+          motpasse: form.motpasse,
+          localisation: form.localisation,  // Ville
+          commune: form.commune,            // Commune
+          metierId: form.metierId,
+        });
+      }
+
+      localStorage.setItem("token", response.token);
+      localStorage.setItem("role", response.role);
+      localStorage.setItem("user", JSON.stringify(response.user));
+
+      setSuccess("Inscription réussie ! Redirection...");
+
+      setTimeout(() => {
+        if (response.role === "ARTISAN") {
+          navigate("/dashboard-artisan");
+        } else {
+          navigate("/dashboard-client");
+        }
+      }, 1500);
+
+    } catch (err: any) {
+      setError(err.response?.data?.message || "Erreur lors de l'inscription");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -63,106 +109,178 @@ const Register = () => {
         ]}
       />
 
-      <div className="min-h-[calc(100vh-80px)] bg-gray-50 flex items-center justify-center px-4">
-        <div className="w-full max-w-md bg-white rounded-2xl shadow-lg p-8">
+      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center px-4 py-12">
+        <div className="w-full max-w-md bg-white rounded-2xl shadow-xl overflow-hidden">
 
-          <h2 className="text-2xl font-bold text-center mb-2">
-            Créer un compte
-          </h2>
-          <p className="text-center text-gray-500 mb-6">
-            Choisissez votre type de compte
-          </p>
-
-          {/* Choix du rôle */}
-          <div className="grid grid-cols-2 gap-4 mb-6">
-            <button
-              onClick={() => setRole("CLIENT")}
-              className={`border rounded-xl p-4 flex flex-col items-center gap-2 transition
-                ${role === "CLIENT"
-                  ? "border-blue-600 bg-blue-50"
-                  : "border-gray-300 hover:border-blue-400"}`}
-            >
-              <User />
-              <span className="font-medium">Client</span>
-            </button>
-
-            <button
-              onClick={() => setRole("ARTISAN")}
-              className={`border rounded-xl p-4 flex flex-col items-center gap-2 transition
-                ${role === "ARTISAN"
-                  ? "border-blue-600 bg-blue-50"
-                  : "border-gray-300 hover:border-blue-400"}`}
-            >
-              <Briefcase />
-              <span className="font-medium">Artisan</span>
-            </button>
+          {/* Header */}
+          <div className="bg-gradient-to-r from-blue-600 to-blue-700 px-6 py-8 text-center">
+            <div className="w-16 h-16 bg-white/20 rounded-2xl flex items-center justify-center mx-auto mb-3">
+              <span className="text-white text-2xl font-bold">A</span>
+            </div>
+            <h2 className="text-white text-2xl font-bold">Créer un compte</h2>
+            <p className="text-blue-100 text-sm mt-1">Rejoignez la communauté ArtisanCI</p>
           </div>
 
-          {/* Formulaire */}
-          <form className="space-y-4">
-            <input
-              type="text"
-              placeholder="Nom complet"
-              value={form.name}
-              onChange={(e) => setForm({ ...form, name: e.target.value })}
-              className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 outline-none"
-            />
+          {/* Body */}
+          <div className="p-6">
 
-            <input
-              type="email"
-              placeholder="Adresse email"
-              value={form.email}
-              onChange={(e) => setForm({ ...form, email: e.target.value })}
-              className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 outline-none"
-            />
-
-            {/* Champ métier – seulement pour artisan */}
-            {role === "ARTISAN" && (
-              <input
-                type="text"
-                placeholder="Votre métier (ex : Plombier, Électricien)"
-                value={form.job}
-                onChange={(e) => setForm({ ...form, job: e.target.value })}
-                className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 outline-none"
-              />
+            {error && (
+              <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-xl flex items-center gap-2 text-red-600 text-sm">
+                <AlertCircle size={16} />
+                {error}
+              </div>
             )}
 
-            <input
-              type="password"
-              placeholder="Mot de passe"
-              value={form.password}
-              onChange={(e) => setForm({ ...form, password: e.target.value })}
-              className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 outline-none"
-            />
+            {success && (
+              <div className="mb-4 p-3 bg-green-50 border border-green-200 rounded-xl flex items-center gap-2 text-green-600 text-sm">
+                <CheckCircle size={16} />
+                {success}
+              </div>
+            )}
 
-            <input
-              type="password"
-              placeholder="Confirmer le mot de passe"
-              value={form.confirmPassword}
-              onChange={(e) =>
-                setForm({ ...form, confirmPassword: e.target.value })
-              }
-              className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 outline-none"
-            />
+            {/* Choix du rôle */}
+            <div className="grid grid-cols-2 gap-3 mb-6">
+              <button
+                onClick={() => setRole("CLIENT")}
+                className={`border-2 rounded-xl p-4 flex flex-col items-center gap-2 transition-all duration-200
+                  ${role === "CLIENT"
+                    ? "border-blue-500 bg-blue-50 shadow-md scale-[1.02]"
+                    : "border-gray-200 bg-gray-50 hover:border-blue-300"}`}
+              >
+                <div className={`p-2 rounded-full ${role === "CLIENT" ? "bg-blue-500" : "bg-gray-400"}`}>
+                  <User size={20} className="text-white" />
+                </div>
+                <span className={`font-medium ${role === "CLIENT" ? "text-blue-600" : "text-gray-600"}`}>
+                  Client
+                </span>
+              </button>
 
-            <button
-              type="button"
-              onClick={handleSubmit}
-              className="w-full bg-blue-600 text-white py-3 rounded-lg font-medium hover:bg-blue-700 transition"
-            >
-              S’inscrire
-            </button>
-          </form>
+              <button
+                onClick={() => setRole("ARTISAN")}
+                className={`border-2 rounded-xl p-4 flex flex-col items-center gap-2 transition-all duration-200
+                  ${role === "ARTISAN"
+                    ? "border-blue-500 bg-blue-50 shadow-md scale-[1.02]"
+                    : "border-gray-200 bg-gray-50 hover:border-blue-300"}`}
+              >
+                <div className={`p-2 rounded-full ${role === "ARTISAN" ? "bg-blue-500" : "bg-gray-400"}`}>
+                  <Briefcase size={20} className="text-white" />
+                </div>
+                <span className={`font-medium ${role === "ARTISAN" ? "text-blue-600" : "text-gray-600"}`}>
+                  Artisan
+                </span>
+              </button>
+            </div>
 
-          <p className="text-center text-sm text-gray-500 mt-6">
-            Déjà un compte ?{" "}
-            <button
-              onClick={() => navigate("/login")}
-              className="text-blue-600 hover:underline font-medium"
-            >
-              Se connecter
-            </button>
-          </p>
+            {/* Formulaire */}
+            <form className="space-y-4" onSubmit={(e) => e.preventDefault()}>
+              <div className="grid grid-cols-2 gap-3">
+                <input
+                  type="text"
+                  placeholder="Prénom"
+                  value={form.prenom}
+                  onChange={(e) => setForm({ ...form, prenom: e.target.value })}
+                  className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-blue-400 focus:ring-2 focus:ring-blue-200 outline-none transition"
+                />
+                <input
+                  type="text"
+                  placeholder="Nom"
+                  value={form.nom}
+                  onChange={(e) => setForm({ ...form, nom: e.target.value })}
+                  className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-blue-400 focus:ring-2 focus:ring-blue-200 outline-none transition"
+                />
+              </div>
+
+              <input
+                type="email"
+                placeholder="Adresse email"
+                value={form.email}
+                onChange={(e) => setForm({ ...form, email: e.target.value })}
+                className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-blue-400 focus:ring-2 focus:ring-blue-200 outline-none transition"
+              />
+
+              {/* LOCALISATION ET COMMUNE - pour les deux rôles */}
+              <div className="grid grid-cols-2 gap-3">
+                <div className="relative">
+                  <MapPin size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                  <input
+                    type="text"
+                    placeholder="Ville"
+                    value={form.localisation}
+                    onChange={(e) => setForm({ ...form, localisation: e.target.value })}
+                    className="w-full pl-10 pr-4 py-3 rounded-xl border border-gray-200 focus:border-blue-400 focus:ring-2 focus:ring-blue-200 outline-none transition"
+                  />
+                </div>
+                <div className="relative">
+                  <MapPin size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                  <input
+                    type="text"
+                    placeholder="Commune"
+                    value={form.commune}
+                    onChange={(e) => setForm({ ...form, commune: e.target.value })}
+                    className="w-full pl-10 pr-4 py-3 rounded-xl border border-gray-200 focus:border-blue-400 focus:ring-2 focus:ring-blue-200 outline-none transition"
+                  />
+                </div>
+              </div>
+
+              {/* Métier - seulement pour artisan */}
+              {role === "ARTISAN" && (
+                <select
+                  value={form.metierId}
+                  onChange={(e) => setForm({ ...form, metierId: Number(e.target.value) })}
+                  className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-blue-400 focus:ring-2 focus:ring-blue-200 outline-none transition bg-white"
+                >
+                  <option value={1}>Plomberie</option>
+                  <option value={2}>Électricité</option>
+                  <option value={3}>Serrurerie</option>
+                  <option value={4}>Peinture</option>
+                  <option value={5}>Menuiserie</option>
+                  <option value={6}>Maçonnerie</option>
+                </select>
+              )}
+
+              <input
+                type="password"
+                placeholder="Mot de passe"
+                value={form.motpasse}
+                onChange={(e) => setForm({ ...form, motpasse: e.target.value })}
+                className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-blue-400 focus:ring-2 focus:ring-blue-200 outline-none transition"
+              />
+
+              <input
+                type="password"
+                placeholder="Confirmer le mot de passe"
+                value={form.confirmPassword}
+                onChange={(e) => setForm({ ...form, confirmPassword: e.target.value })}
+                className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-blue-400 focus:ring-2 focus:ring-blue-200 outline-none transition"
+              />
+
+              <button
+                type="button"
+                onClick={handleSubmit}
+                disabled={loading}
+                className="w-full bg-gradient-to-r from-blue-600 to-blue-700 text-white py-3 rounded-xl font-semibold hover:from-blue-700 hover:to-blue-800 transition-all duration-200 shadow-md hover:shadow-lg disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+              >
+                {loading ? (
+                  <>
+                    <Loader2 size={18} className="animate-spin" />
+                    Inscription en cours...
+                  </>
+                ) : (
+                  "S'inscrire"
+                )}
+              </button>
+            </form>
+
+            <p className="text-center text-sm text-gray-500 mt-6">
+              Déjà un compte ?{" "}
+              <button
+                onClick={() => navigate("/login")}
+                className="text-blue-600 hover:text-blue-700 font-semibold hover:underline"
+              >
+                Se connecter
+              </button>
+            </p>
+          </div>
         </div>
       </div>
     </>
