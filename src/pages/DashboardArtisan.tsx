@@ -1,3 +1,5 @@
+// src/pages/DashboardArtisan.tsx
+
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Navbar from "../components/Navbar";
@@ -19,7 +21,7 @@ import {
   X,
 } from "lucide-react";
 import { getMe } from "../api/auth.api";
-import { getDemandesByArtisanId } from "../api/demande.api";
+import { getDemandesDisponiblesByArtisanId } from "../api/demande.api";
 import type { DemandeArtisanResponse } from "../types/demande";
 import api from "../api/axios";
 
@@ -53,7 +55,7 @@ const DashboardArtisan = () => {
     fetchUser();
   }, [navigate]);
 
-  // Récupérer les demandes de l'artisan (déjà filtrées par localisation par le backend)
+  // Récupérer les demandes disponibles pour l'artisan (même commune)
   const fetchDemandes = async () => {
     try {
       const storedUser = localStorage.getItem("user");
@@ -71,9 +73,10 @@ const DashboardArtisan = () => {
         return;
       }
       
-      console.log("📡 Chargement des demandes pour artisan ID:", artisanId);
-      const data = await getDemandesByArtisanId(artisanId);
-      console.log("📋 Demandes reçues:", data);
+      console.log("📡 Chargement des demandes disponibles pour artisan ID:", artisanId);
+      // ✅ Utilisation de la nouvelle route
+      const data = await getDemandesDisponiblesByArtisanId(artisanId);
+      console.log("📋 Demandes disponibles reçues:", data);
       
       setDemandes(Array.isArray(data) ? data : []);
     } catch (err) {
@@ -95,7 +98,6 @@ const DashboardArtisan = () => {
     try {
       await api.put(`/demandes/${demandeId}/accepter`);
       console.log("✅ Demande acceptée:", demandeId);
-      // Rafraîchir la liste
       await fetchDemandes();
     } catch (err) {
       console.error("Erreur lors de l'acceptation", err);
@@ -112,7 +114,6 @@ const DashboardArtisan = () => {
     try {
       await api.put(`/demandes/${demandeId}/refuser`);
       console.log("❌ Demande refusée:", demandeId);
-      // Rafraîchir la liste
       await fetchDemandes();
     } catch (err) {
       console.error("Erreur lors du refus", err);
@@ -139,6 +140,16 @@ const DashboardArtisan = () => {
       : demandes.filter((d) => d.statutDemande === activeFilter);
 
   const initiales = user ? `${user.prenom?.charAt(0) || ""}${user.nom?.charAt(0) || ""}` : "?";
+
+  // Formater l'heure si c'est un objet
+  const formatHeure = (heure: any) => {
+    if (!heure) return "Non spécifiée";
+    if (typeof heure === "string") return heure;
+    if (typeof heure === "object" && heure.hour !== undefined) {
+      return `${heure.hour.toString().padStart(2, "0")}:${heure.minute.toString().padStart(2, "0")}`;
+    }
+    return "Non spécifiée";
+  };
 
   return (
     <>
@@ -220,11 +231,11 @@ const DashboardArtisan = () => {
           <div className="bg-white rounded-2xl shadow-lg p-6">
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
               <div>
-                <h2 className="text-xl font-bold text-gray-800">Demandes reçues</h2>
+                <h2 className="text-xl font-bold text-gray-800">Demandes disponibles</h2>
                 {user?.commune && (
                   <p className="text-sm text-blue-600 mt-1 flex items-center gap-1">
                     <MapPin size={14} />
-                    Uniquement les demandes dans votre commune : {user.commune}
+                    Demandes dans votre commune : <strong>{user.commune}</strong>
                   </p>
                 )}
               </div>
@@ -266,9 +277,9 @@ const DashboardArtisan = () => {
             ) : demandesFiltrees.length === 0 ? (
               <div className="text-center py-16">
                 <ClipboardList size={48} className="mx-auto text-gray-300 mb-3" />
-                <p className="text-gray-500">Aucune demande reçue</p>
+                <p className="text-gray-500">Aucune demande disponible</p>
                 <p className="text-sm text-gray-400 mt-1">
-                  Les clients de votre commune vous contacteront ici
+                  Les demandes des clients de votre commune apparaîtront ici
                 </p>
               </div>
             ) : (
@@ -295,12 +306,20 @@ const DashboardArtisan = () => {
                               <Calendar size={12} />
                               {new Date(demande.dateRendezVous).toLocaleDateString("fr-FR")}
                             </span>
+                            <span className="text-xs text-gray-400 flex items-center gap-1">
+                              <Clock size={12} />
+                              {formatHeure(demande.heure)}
+                            </span>
                           </div>
                           <p className="font-semibold text-gray-800">{demande.descriptionTravail}</p>
                           <div className="mt-2 flex flex-wrap gap-3 text-sm text-gray-500">
                             <span className="flex items-center gap-1">
                               <Users size={14} />
-                              {demande.clientName}
+                              Client: {demande.clientName}
+                            </span>
+                            <span className="flex items-center gap-1">
+                              <MapPin size={14} />
+                              Localisation: {demande.localisation || user?.commune}
                             </span>
                           </div>
                         </div>

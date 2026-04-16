@@ -36,6 +36,13 @@ export const createDemandeWithPhoto = async (
   return response.data;
 };
 
+// src/api/demande.api.ts
+
+// ✅ Récupérer les demandes disponibles pour un artisan (même commune)
+export const getDemandesDisponiblesByArtisanId = (artisanId: number): Promise<DemandeArtisanResponse[]> => {
+  return api.get(`/demandes/disponibles/artisan/${artisanId}`).then(res => res.data);
+};
+
 // ⚠️ Créer une demande SANS photo (JSON simple)
 export const createDemande = (data: CreateDemandeData): Promise<DemandeResponse> => {
   return api.post("/demandes", data).then(res => res.data);
