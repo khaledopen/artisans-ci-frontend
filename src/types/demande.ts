@@ -1,18 +1,17 @@
 // src/types/demande.ts
 
+// 📌 Données pour la création d'une demande (multipart/form-data)
+// src/types/demande.ts
+
 export interface CreateDemandeData {
-  date_rendez_vous: string;
-  heure: string;
+  date_rendez_vous: string;      // YYYY-MM-DD
   description_travail: string;
-  photo_endommage?: string[];
-  photo_content_type?: string;
-  statut_demande?: "EN_ATTENTE" | "ACCEPTEE" | "REFUSEE" | "TERMINEE";
-  client: {
-    id: number;
-  };
+  clientId: number;
+  // artisanId est optionnel car le backend l'assigne automatiquement
+  artisanId?: number;
 }
 
-// Réponse de GET /demandes/client/{clientId}
+// 📌 Réponse de GET /demandes/client/{clientId}
 export interface DemandeClientResponse {
   id: number;
   dateRendezVous: string;
@@ -25,7 +24,7 @@ export interface DemandeClientResponse {
   artisanName?: string;
 }
 
-// ✅ Réponse de GET /demandes/artisan/{artisanId}
+// 📌 Réponse de GET /demandes/artisan/{artisanId}
 export interface DemandeArtisanResponse {
   id: number;
   dateRendezVous: string;
@@ -38,14 +37,14 @@ export interface DemandeArtisanResponse {
   artisanName: string;
 }
 
-// Réponse de GET /demandes/{id}
+// 📌 Réponse de GET /demandes/{id} (détail complet)
 export interface DemandeResponse {
   id: number;
   dateRendezVous?: string;
   date_rendez_vous?: string;
   descriptionTravail?: string;
   description_travail?: string;
-  statutDemande?: string;
+  statutDemande?: "EN_ATTENTE" | "ACCEPTEE" | "REFUSEE" | "TERMINEE";
   statut_demande?: string;
   heure?: string;
   clientId?: number;
@@ -77,7 +76,7 @@ export interface DemandeResponse {
   photos?: string[];
 }
 
-// Pour la liste des demandes (paginée)
+// 📌 Pour la liste des demandes (paginée)
 export interface DemandesResponse {
   content: DemandeResponse[];
   totalPages: number;
@@ -87,4 +86,9 @@ export interface DemandesResponse {
   first: boolean;
   last: boolean;
   empty: boolean;
+}
+
+// 📌 Pour la mise à jour du statut
+export interface UpdateStatutDemandeData {
+  statut: "EN_ATTENTE" | "ACCEPTEE" | "REFUSEE" | "TERMINEE";
 }

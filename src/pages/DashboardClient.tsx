@@ -1,3 +1,5 @@
+// src/pages/DashboardClient.tsx
+
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Navbar from "../components/Navbar";
@@ -46,7 +48,7 @@ const DashboardClient = () => {
     fetchUser();
   }, [navigate]);
 
-  // Récupérer les demandes du client via la nouvelle API
+  // Récupérer les demandes du client
   useEffect(() => {
     const fetchDemandes = async () => {
       try {
@@ -165,8 +167,9 @@ const DashboardClient = () => {
           <div className="bg-white rounded-2xl shadow-lg p-6">
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
               <h2 className="text-xl font-bold text-gray-800">Mes demandes de service</h2>
+              {/* ✅ CORRECTION ICI : redirige vers /creer-demande */}
               <button
-                onClick={() => navigate("/artisans")}
+                onClick={() => navigate("/creer-demande")}
                 className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-xl hover:bg-blue-700 transition"
               >
                 <Search size={16} /> Nouvelle demande
@@ -207,8 +210,9 @@ const DashboardClient = () => {
               <div className="text-center py-16">
                 <ClipboardList size={48} className="mx-auto text-gray-300 mb-3" />
                 <p className="text-gray-500">Aucune demande trouvée</p>
+                {/* ✅ CORRECTION ICI aussi */}
                 <button
-                  onClick={() => navigate("/artisans")}
+                  onClick={() => navigate("/creer-demande")}
                   className="mt-4 text-blue-600 hover:underline"
                 >
                   Créer ma première demande →
@@ -241,7 +245,7 @@ const DashboardClient = () => {
                           {demande.artisanName && (
                             <p className="text-sm text-gray-500 mt-1 flex items-center gap-1">
                               <Wrench size={14} />
-                              {demande.artisanName}
+                              Artisan: {demande.artisanName}
                             </p>
                           )}
                         </div>

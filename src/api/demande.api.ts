@@ -1,9 +1,42 @@
 // src/api/demande.api.ts
 
 import api from "./axios";
-import type { CreateDemandeData, DemandeResponse, DemandesResponse, DemandeClientResponse, DemandeArtisanResponse } from "../types/demande";
+import type { 
+  CreateDemandeData, 
+  DemandeResponse, 
+  DemandesResponse, 
+  DemandeClientResponse, 
+  DemandeArtisanResponse 
+} from "../types/demande";
 
-// Créer une nouvelle demande
+// ✅ Créer une nouvelle demande AVEC photo (multipart/form-data)
+export const createDemandeWithPhoto = async (
+  demandeData: CreateDemandeData,
+  photoFile?: File
+): Promise<DemandeResponse> => {
+  const formData = new FormData();
+  
+  // Créer un Blob JSON pour la partie "demande"
+  const demandeBlob = new Blob([JSON.stringify(demandeData)], {
+    type: "application/json"
+  });
+  formData.append("demande", demandeBlob);
+  
+  // Ajouter la photo si elle existe (le backend attend "photo_endommage" ou "photo"?)
+  if (photoFile) {
+    formData.append("photo_endommage", photoFile);
+  }
+  
+  const response = await api.post("/demandes", formData, {
+    headers: {
+      "Content-Type": "multipart/form-data",
+    },
+  });
+  
+  return response.data;
+};
+
+// ⚠️ Créer une demande SANS photo (JSON simple)
 export const createDemande = (data: CreateDemandeData): Promise<DemandeResponse> => {
   return api.post("/demandes", data).then(res => res.data);
 };
@@ -18,7 +51,7 @@ export const getDemandesByClientId = (clientId: number): Promise<DemandeClientRe
   return api.get(`/demandes/client/${clientId}`).then(res => res.data);
 };
 
-// ✅ Récupérer toutes les demandes d'un artisan
+// Récupérer toutes les demandes d'un artisan
 export const getDemandesByArtisanId = (artisanId: number): Promise<DemandeArtisanResponse[]> => {
   return api.get(`/demandes/artisan/${artisanId}`).then(res => res.data);
 };
@@ -38,7 +71,7 @@ export const getDemandeStatut = (id: number): Promise<{ statut: string }> => {
   return api.get(`/demandes/${id}/statut`).then(res => res.data);
 };
 
-// Récupérer l'heure d'une demande
+// Récupérer l'heure d'une demande (si le backend le supporte)
 export const getDemandeHeure = (id: number): Promise<{ heure: string }> => {
   return api.get(`/demandes/${id}/heure`).then(res => res.data);
 };
@@ -48,7 +81,7 @@ export const getDemandePhotos = (id: number): Promise<string[]> => {
   return api.get(`/demandes/${id}/photo`).then(res => res.data);
 };
 
-// Ajouter une photo à une demande
+// Ajouter une photo à une demande existante
 export const addDemandePhoto = (id: number, file: File): Promise<{ message: string; photoUrl?: string }> => {
   const formData = new FormData();
   formData.append("file", file);

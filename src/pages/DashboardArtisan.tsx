@@ -15,10 +15,13 @@ import {
   Briefcase,
   Users,
   Settings,
+  Check,
+  X,
 } from "lucide-react";
 import { getMe } from "../api/auth.api";
 import { getDemandesByArtisanId } from "../api/demande.api";
 import type { DemandeArtisanResponse } from "../types/demande";
+import api from "../api/axios";
 
 const statutConfig: Record<string, { label: string; bg: string; text: string; border: string; icon: any }> = {
   EN_ATTENTE: { label: "En attente", bg: "bg-amber-50", text: "text-amber-700", border: "border-amber-200", icon: Clock },
@@ -33,6 +36,7 @@ const DashboardArtisan = () => {
   const [demandes, setDemandes] = useState<DemandeArtisanResponse[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeFilter, setActiveFilter] = useState<string>("TOUTES");
+  const [actionLoading, setActionLoading] = useState<number | null>(null);
 
   // Récupérer l'utilisateur connecté
   useEffect(() => {
@@ -40,6 +44,8 @@ const DashboardArtisan = () => {
       try {
         const data = await getMe();
         setUser(data);
+        console.log("👨‍🔧 Artisan connecté:", data);
+        console.log("📍 Commune de l'artisan:", data.commune);
       } catch {
         navigate("/login");
       }
@@ -47,36 +53,73 @@ const DashboardArtisan = () => {
     fetchUser();
   }, [navigate]);
 
-  // Récupérer les demandes de l'artisan via la nouvelle API
-  useEffect(() => {
-    const fetchDemandes = async () => {
-      try {
-        const storedUser = localStorage.getItem("user");
-        if (!storedUser) {
-          setLoading(false);
-          return;
-        }
-        
-        const userData = JSON.parse(storedUser);
-        const artisanId = userData.id;
-        
-        if (!artisanId) {
-          console.error("ID artisan non trouvé");
-          setLoading(false);
-          return;
-        }
-        
-        const data = await getDemandesByArtisanId(artisanId);
-        setDemandes(Array.isArray(data) ? data : []);
-      } catch (err) {
-        console.error("Erreur chargement demandes", err);
-      } finally {
+  // Récupérer les demandes de l'artisan (déjà filtrées par localisation par le backend)
+  const fetchDemandes = async () => {
+    try {
+      const storedUser = localStorage.getItem("user");
+      if (!storedUser) {
         setLoading(false);
+        return;
       }
-    };
+      
+      const userData = JSON.parse(storedUser);
+      const artisanId = userData.id;
+      
+      if (!artisanId) {
+        console.error("ID artisan non trouvé");
+        setLoading(false);
+        return;
+      }
+      
+      console.log("📡 Chargement des demandes pour artisan ID:", artisanId);
+      const data = await getDemandesByArtisanId(artisanId);
+      console.log("📋 Demandes reçues:", data);
+      
+      setDemandes(Array.isArray(data) ? data : []);
+    } catch (err) {
+      console.error("Erreur chargement demandes", err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
+  useEffect(() => {
     fetchDemandes();
   }, []);
+
+  // Accepter une demande
+  const handleAccepter = async (demandeId: number, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setActionLoading(demandeId);
+    
+    try {
+      await api.put(`/demandes/${demandeId}/accepter`);
+      console.log("✅ Demande acceptée:", demandeId);
+      // Rafraîchir la liste
+      await fetchDemandes();
+    } catch (err) {
+      console.error("Erreur lors de l'acceptation", err);
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
+  // Refuser une demande
+  const handleRefuser = async (demandeId: number, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setActionLoading(demandeId);
+    
+    try {
+      await api.put(`/demandes/${demandeId}/refuser`);
+      console.log("❌ Demande refusée:", demandeId);
+      // Rafraîchir la liste
+      await fetchDemandes();
+    } catch (err) {
+      console.error("Erreur lors du refus", err);
+    } finally {
+      setActionLoading(null);
+    }
+  };
 
   const handleLogout = () => {
     localStorage.clear();
@@ -129,6 +172,9 @@ const DashboardArtisan = () => {
                   <p className="text-blue-200 text-sm flex items-center gap-1 mt-1">
                     <Briefcase size={14} /> {user?.metier?.nom || "Artisan"}
                   </p>
+                  <p className="text-blue-200 text-xs flex items-center gap-1 mt-0.5">
+                    <MapPin size={12} /> {user?.commune || "Commune non définie"} • {user?.localisation || "Abidjan"}
+                  </p>
                 </div>
               </div>
               <div className="flex gap-3">
@@ -173,7 +219,15 @@ const DashboardArtisan = () => {
         <div className="max-w-6xl mx-auto px-4 -mt-8 pb-12">
           <div className="bg-white rounded-2xl shadow-lg p-6">
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
-              <h2 className="text-xl font-bold text-gray-800">Demandes reçues</h2>
+              <div>
+                <h2 className="text-xl font-bold text-gray-800">Demandes reçues</h2>
+                {user?.commune && (
+                  <p className="text-sm text-blue-600 mt-1 flex items-center gap-1">
+                    <MapPin size={14} />
+                    Uniquement les demandes dans votre commune : {user.commune}
+                  </p>
+                )}
+              </div>
               <div className="text-sm text-gray-500 bg-gray-100 px-3 py-1 rounded-full">
                 {demandesFiltrees.length} demande(s)
               </div>
@@ -213,13 +267,17 @@ const DashboardArtisan = () => {
               <div className="text-center py-16">
                 <ClipboardList size={48} className="mx-auto text-gray-300 mb-3" />
                 <p className="text-gray-500">Aucune demande reçue</p>
-                <p className="text-sm text-gray-400 mt-1">Les clients vous contacteront ici</p>
+                <p className="text-sm text-gray-400 mt-1">
+                  Les clients de votre commune vous contacteront ici
+                </p>
               </div>
             ) : (
               <div className="space-y-4">
                 {demandesFiltrees.map((demande) => {
                   const config = statutConfig[demande.statutDemande] || statutConfig.EN_ATTENTE;
                   const Icon = config.icon;
+                  const isActionLoading = actionLoading === demande.id;
+                  
                   return (
                     <div
                       key={demande.id}
@@ -250,23 +308,27 @@ const DashboardArtisan = () => {
                           {demande.statutDemande === "EN_ATTENTE" && (
                             <>
                               <button
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  // TODO: Accepter la demande
-                                  console.log("Accepter demande", demande.id);
-                                }}
-                                className="px-3 py-1 bg-green-600 text-white rounded-lg text-sm hover:bg-green-700 transition"
+                                onClick={(e) => handleAccepter(demande.id, e)}
+                                disabled={isActionLoading}
+                                className="flex items-center gap-1 px-3 py-1 bg-green-600 text-white rounded-lg text-sm hover:bg-green-700 transition disabled:opacity-50"
                               >
+                                {isActionLoading ? (
+                                  <Loader2 size={14} className="animate-spin" />
+                                ) : (
+                                  <Check size={14} />
+                                )}
                                 Accepter
                               </button>
                               <button
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  // TODO: Refuser la demande
-                                  console.log("Refuser demande", demande.id);
-                                }}
-                                className="px-3 py-1 bg-red-600 text-white rounded-lg text-sm hover:bg-red-700 transition"
+                                onClick={(e) => handleRefuser(demande.id, e)}
+                                disabled={isActionLoading}
+                                className="flex items-center gap-1 px-3 py-1 bg-red-600 text-white rounded-lg text-sm hover:bg-red-700 transition disabled:opacity-50"
                               >
+                                {isActionLoading ? (
+                                  <Loader2 size={14} className="animate-spin" />
+                                ) : (
+                                  <X size={14} />
+                                )}
                                 Refuser
                               </button>
                             </>
