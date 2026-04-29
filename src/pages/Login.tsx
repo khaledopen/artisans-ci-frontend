@@ -1,39 +1,52 @@
+// src/pages/Login.tsx
+
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Loader2, AlertCircle, CheckCircle, Eye, EyeOff } from "lucide-react";
+import { Loader2, AlertCircle, CheckCircle, Eye, EyeOff, User, Briefcase, Shield } from "lucide-react";
 import { login } from "../api/auth.api";
+
+type SelectedRole = "CLIENT" | "ARTISAN" | null;
 
 const Login = () => {
   const navigate = useNavigate();
 
+  const [selectedRole, setSelectedRole] = useState<SelectedRole>(null);
   const [form, setForm] = useState({
     email: "",
     motpasse: "",
   });
-
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
 
   const handleSubmit = async () => {
-    // Reset messages
     setError("");
     setSuccess("");
 
-    // Validation
     if (!form.email || !form.motpasse) {
       setError("Veuillez remplir tous les champs");
       return;
     }
 
+    // ✅ Pour l'admin, pas besoin de sélectionner un rôle
+    // Le backend vérifiera automatiquement
+
     setLoading(true);
 
     try {
+      console.log("🔐 Tentative de connexion avec:", form.email);
+      console.log("👤 Rôle sélectionné:", selectedRole);
+      
+      // ✅ Envoyer le rôle si sélectionné (pour Client ou Artisan)
       const response = await login({
         email: form.email,
         motpasse: form.motpasse,
+        role: selectedRole || undefined,  // ← Envoyer le rôle si sélectionné
       });
+
+      console.log("✅ Réponse du backend:", response);
+      console.log("👤 Rôle reçu:", response.role);
 
       // Stockage des infos
       localStorage.setItem("token", response.token);
@@ -54,8 +67,20 @@ const Login = () => {
       }, 1500);
 
     } catch (err: any) {
-      const message = err.response?.data?.message || "Email ou mot de passe incorrect";
-      setError(message);
+      console.error("❌ Erreur:", err);
+      console.error("❌ Statut:", err.response?.status);
+      console.error("❌ Message:", err.response?.data?.message);
+      
+      if (err.response?.status === 409) {
+        // ✅ Erreur spécifique : plusieurs comptes trouvés
+        setError("Plusieurs comptes trouvés avec cet email. Veuillez sélectionner un rôle (Client ou Artisan).");
+      } else if (err.response?.status === 401) {
+        setError("Email ou mot de passe incorrect");
+      } else if (err.response?.status === 403) {
+        setError("Compte bloqué. Contactez l'administrateur.");
+      } else {
+        setError(err.response?.data?.message || "Email ou mot de passe incorrect");
+      }
     } finally {
       setLoading(false);
     }
@@ -65,12 +90,12 @@ const Login = () => {
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-50 to-gray-100 px-4">
       <div className="w-full max-w-md bg-white rounded-2xl shadow-xl overflow-hidden">
 
-        {/* Header avec dégradé */}
+        {/* Header */}
         <div className="bg-gradient-to-r from-blue-600 to-blue-700 px-6 py-8 text-center">
           <div className="w-16 h-16 bg-white/20 rounded-2xl flex items-center justify-center mx-auto mb-3">
             <span className="text-white text-2xl font-bold">A</span>
           </div>
-          <h2 className="text-white text-2xl font-bold">Bienvenue</h2>
+          <h2 className="text-white text-2xl font-bold">Connexion</h2>
           <p className="text-blue-100 text-sm mt-1">
             Connectez-vous à votre espace
           </p>
@@ -79,7 +104,6 @@ const Login = () => {
         {/* Body */}
         <div className="p-6">
 
-          {/* Messages d'alerte */}
           {error && (
             <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-xl flex items-center gap-2 text-red-600 text-sm">
               <AlertCircle size={16} />
@@ -94,9 +118,58 @@ const Login = () => {
             </div>
           )}
 
+          {/* Message informatif */}
+          <div className="mb-4 p-2 bg-yellow-50 border border-yellow-200 rounded-xl text-center text-xs text-yellow-700">
+            ⚠️ Si vous avez un compte Client ET Artisan avec le même email, sélectionnez le bon rôle
+          </div>
+
+          <div className="mb-4 p-2 bg-purple-50 border border-purple-200 rounded-xl text-center text-xs text-purple-600">
+            <Shield size={14} className="inline mr-1" />
+            Les administrateurs n'ont pas besoin de sélectionner un type
+          </div>
+
+          {/* Choix du rôle */}
+          <div className="mb-6">
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Je me connecte en tant que :
+            </label>
+            <div className="grid grid-cols-2 gap-3">
+              <button
+                type="button"
+                onClick={() => setSelectedRole("CLIENT")}
+                className={`border-2 rounded-xl p-4 flex flex-col items-center gap-2 transition-all duration-200
+                  ${selectedRole === "CLIENT"
+                    ? "border-blue-500 bg-blue-50 shadow-md scale-[1.02]"
+                    : "border-gray-200 bg-gray-50 hover:border-blue-300"}`}
+              >
+                <div className={`p-2 rounded-full ${selectedRole === "CLIENT" ? "bg-blue-500" : "bg-gray-400"}`}>
+                  <User size={20} className="text-white" />
+                </div>
+                <span className={`font-medium ${selectedRole === "CLIENT" ? "text-blue-600" : "text-gray-600"}`}>
+                  Client
+                </span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setSelectedRole("ARTISAN")}
+                className={`border-2 rounded-xl p-4 flex flex-col items-center gap-2 transition-all duration-200
+                  ${selectedRole === "ARTISAN"
+                    ? "border-blue-500 bg-blue-50 shadow-md scale-[1.02]"
+                    : "border-gray-200 bg-gray-50 hover:border-blue-300"}`}
+              >
+                <div className={`p-2 rounded-full ${selectedRole === "ARTISAN" ? "bg-blue-500" : "bg-gray-400"}`}>
+                  <Briefcase size={20} className="text-white" />
+                </div>
+                <span className={`font-medium ${selectedRole === "ARTISAN" ? "text-blue-600" : "text-gray-600"}`}>
+                  Artisan
+                </span>
+              </button>
+            </div>
+          </div>
+
           {/* Formulaire */}
           <form className="space-y-4" onSubmit={(e) => e.preventDefault()}>
-            {/* Champ Email */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Email
@@ -111,7 +184,6 @@ const Login = () => {
               />
             </div>
 
-            {/* Champ Mot de passe avec toggle */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Mot de passe
@@ -136,7 +208,6 @@ const Login = () => {
               </div>
             </div>
 
-            {/* Bouton de connexion */}
             <button
               type="button"
               onClick={handleSubmit}
@@ -154,13 +225,9 @@ const Login = () => {
             </button>
           </form>
 
-          {/* Lien inscription */}
           <p className="text-center text-sm text-gray-500 mt-6">
             Pas encore de compte ?{" "}
-            <Link
-              to="/register"
-              className="text-blue-600 hover:text-blue-700 font-semibold hover:underline"
-            >
+            <Link to="/register" className="text-blue-600 hover:text-blue-700 font-semibold hover:underline">
               S’inscrire
             </Link>
           </p>

@@ -11,7 +11,7 @@ const CreerDemande = () => {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   
-  // Formulaire - sans heure
+  // Formulaire
   const [form, setForm] = useState({
     date_rendez_vous: "",
     description_travail: "",
@@ -20,13 +20,12 @@ const CreerDemande = () => {
   const [photo, setPhoto] = useState<File | null>(null);
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
 
-  // Récupérer l'ID du client connecté
+  // Récupérer les infos du client connecté
   const user = JSON.parse(localStorage.getItem("user") || "{}");
   const clientId = user.id;
   const clientLocalisation = user.localisation || "Abidjan";
   const clientCommune = user.commune || "";
 
-  // Gérer la sélection de photo
   const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
@@ -44,12 +43,10 @@ const CreerDemande = () => {
     setPhotoPreview(null);
   };
 
-  // Soumettre la demande
   const handleSubmit = async () => {
     setError("");
     setSuccess("");
 
-    // Validation
     if (!form.date_rendez_vous) {
       setError("Veuillez sélectionner une date");
       return;
@@ -59,20 +56,31 @@ const CreerDemande = () => {
       return;
     }
 
+    if (!clientCommune) {
+      console.warn("⚠️ Attention: Le client n'a pas de commune définie");
+    }
+
     setLoading(true);
 
     try {
+      // ✅ AJOUT DE LA COMMUNE dans la demande
       const demandeData = {
         date_rendez_vous: form.date_rendez_vous,
         description_travail: form.description_travail,
         clientId: clientId,
+        commune: clientCommune,  // ← AJOUTÉ : commune du client
+        localisation: clientLocalisation,  // ← AJOUTÉ : ville du client
       };
 
-      console.log("📤 Envoi de la demande:", demandeData);
+      console.log("📤 Envoi de la demande avec localisation:", {
+        ...demandeData,
+        commune: clientCommune,
+        localisation: clientLocalisation
+      });
       
       await createDemandeWithPhoto(demandeData, photo || undefined);
       
-      setSuccess("Demande envoyée avec succès ! Un artisan proche de vous va la traiter.");
+      setSuccess(`Demande envoyée avec succès ! Un artisan de ${clientCommune || clientLocalisation} va la traiter.`);
       
       setTimeout(() => {
         navigate("/dashboard-client");
@@ -102,7 +110,6 @@ const CreerDemande = () => {
       <div className="min-h-screen bg-gray-50 py-12">
         <div className="max-w-2xl mx-auto px-6">
           
-          {/* Header */}
           <div className="mb-8">
             <h1 className="text-3xl font-bold text-gray-800">Nouvelle demande de service</h1>
             <p className="text-gray-500 mt-1">
@@ -110,7 +117,6 @@ const CreerDemande = () => {
             </p>
           </div>
 
-          {/* Formulaire */}
           <div className="bg-white rounded-2xl shadow-lg overflow-hidden">
             <div className="bg-gradient-to-r from-blue-600 to-blue-700 px-6 py-6">
               <h2 className="text-white text-xl font-semibold">Informations de la demande</h2>
@@ -119,7 +125,6 @@ const CreerDemande = () => {
 
             <div className="p-6">
               
-              {/* Messages */}
               {error && (
                 <div className="mb-6 p-3 bg-red-50 border border-red-200 rounded-xl text-red-600 text-sm flex items-center gap-2">
                   <AlertCircle size={16} />
@@ -133,19 +138,18 @@ const CreerDemande = () => {
                 </div>
               )}
 
-              {/* Information localisation */}
+              {/* Information localisation avec la commune */}
               <div className="mb-6 p-4 bg-blue-50 rounded-xl border border-blue-100">
                 <p className="text-sm text-blue-700 flex items-center gap-2">
                   <MapPin size={16} />
-                  Votre localisation : <strong>{clientCommune || clientLocalisation}</strong>
+                  Votre localisation : <strong>{clientCommune ? `${clientCommune}, ` : ""}{clientLocalisation}</strong>
                 </p>
                 <p className="text-xs text-blue-600 mt-1">
-                  Un artisan de votre commune recevra votre demande
+                  Un artisan de <strong>{clientCommune || clientLocalisation}</strong> recevra votre demande
                 </p>
               </div>
 
               <form className="space-y-5" onSubmit={(e) => e.preventDefault()}>
-                {/* Date du rendez-vous */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1 flex items-center gap-2">
                     <Calendar size={16} /> Date du rendez-vous *
@@ -159,7 +163,6 @@ const CreerDemande = () => {
                   />
                 </div>
 
-                {/* Description des travaux */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1 flex items-center gap-2">
                     <FileText size={16} /> Description des travaux *
@@ -174,7 +177,6 @@ const CreerDemande = () => {
                   />
                 </div>
 
-                {/* Photo optionnelle */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1 flex items-center gap-2">
                     <Upload size={16} /> Photo (optionnelle)
@@ -210,7 +212,6 @@ const CreerDemande = () => {
                   </p>
                 </div>
 
-                {/* Bouton d'envoi */}
                 <button
                   type="button"
                   onClick={handleSubmit}
@@ -228,7 +229,6 @@ const CreerDemande = () => {
                 </button>
               </form>
 
-              {/* Information supplémentaire */}
               <div className="mt-6 p-4 bg-gray-50 rounded-xl border border-gray-100">
                 <div className="flex items-start gap-3">
                   <Info size={18} className="text-blue-500 mt-0.5" />

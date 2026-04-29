@@ -3,6 +3,7 @@
 export interface LoginData {
   email: string;
   motpasse: string;
+  role?: "CLIENT" | "ARTISAN";  // ← AJOUTÉ (optionnel pour admin)
 }
 
 export interface RegisterClientData {
@@ -11,7 +12,7 @@ export interface RegisterClientData {
   email: string;
   motpasse: string;
   localisation: string;
-  commune: string;  // ← AJOUTÉ
+  commune: string;
 }
 
 export interface RegisterArtisanData {

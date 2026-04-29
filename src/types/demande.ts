@@ -1,15 +1,16 @@
 // src/types/demande.ts
 
-// 📌 Données pour la création d'une demande (multipart/form-data)
-// src/types/demande.ts
+// ========== CRÉATION D'UNE DEMANDE ==========
 
+// 📌 Données pour la création d'une demande (multipart/form-data)
 export interface CreateDemandeData {
   date_rendez_vous: string;      // YYYY-MM-DD
   description_travail: string;
   clientId: number;
-  // artisanId est optionnel car le backend l'assigne automatiquement
-  artisanId?: number;
+  artisanId?: number;            // Optionnel, backend assigne automatiquement
 }
+
+// ========== RÉPONSES API ==========
 
 // 📌 Réponse de GET /demandes/client/{clientId}
 export interface DemandeClientResponse {
@@ -22,6 +23,8 @@ export interface DemandeClientResponse {
   clientName: string;
   artisanId?: number;
   artisanName?: string;
+  peutCommenter?: boolean;   // ✅ Si la demande est terminée et pas encore commentée
+  commentaireId?: number;    // ✅ ID du commentaire si déjà posté
 }
 
 // 📌 Réponse de GET /demandes/artisan/{artisanId}
@@ -35,6 +38,7 @@ export interface DemandeArtisanResponse {
   clientName: string;
   artisanId: number;
   artisanName: string;
+  localisation?: string;     // Localisation du client
 }
 
 // 📌 Réponse de GET /demandes/{id} (détail complet)
@@ -74,7 +78,16 @@ export interface DemandeResponse {
   };
   photo_endommage?: string[];
   photos?: string[];
+  commentaire?: {            // ✅ Commentaire associé à la demande
+    id: number;
+    commentaire: string;
+    note: number;
+    photo?: string;
+    createdAt: string;
+  };
 }
+
+// ========== RÉPONSES PAGINÉES ==========
 
 // 📌 Pour la liste des demandes (paginée)
 export interface DemandesResponse {
@@ -87,6 +100,8 @@ export interface DemandesResponse {
   last: boolean;
   empty: boolean;
 }
+
+// ========== MISES À JOUR ==========
 
 // 📌 Pour la mise à jour du statut
 export interface UpdateStatutDemandeData {

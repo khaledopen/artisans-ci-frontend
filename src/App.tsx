@@ -10,6 +10,7 @@ import DashboardAdmin from "./pages/DashboardAdmin";
 import ProfileArtisan from "./pages/ProfileArtisan";
 import CreerDemande from "./pages/CreerDemande";
 import DemandeDetail from "./pages/DemandeDetail";
+import LaisserAvis from "./pages/LaisserAvis";
 import ProtectedRoute from "./utils/ProtectedRoute";
 import GuestRoute from "./utils/GuestRoute";
 
@@ -95,6 +96,16 @@ function App() {
         element={
           <ProtectedRoute>
             <DemandeDetail />
+          </ProtectedRoute>
+        }
+      />
+
+      {/* ========== LAISSER UN AVIS (CLIENT UNIQUEMENT) ========== */}
+      <Route
+        path="/laisser-avis/:id"
+        element={
+          <ProtectedRoute role="CLIENT">
+            <LaisserAvis />
           </ProtectedRoute>
         }
       />

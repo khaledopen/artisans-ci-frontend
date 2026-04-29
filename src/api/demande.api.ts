@@ -99,3 +99,8 @@ export const addDemandePhoto = (id: number, file: File): Promise<{ message: stri
     },
   }).then(res => res.data);
 };
+
+// Récupérer toutes les demandes (admin)
+export const getAdminDemandes = (page = 0, size = 10): Promise<DemandesResponse> => {
+  return api.get(`/admin/demandes?page=${page}&size=${size}`).then(res => res.data);
+};

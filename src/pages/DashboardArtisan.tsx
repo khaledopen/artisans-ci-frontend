@@ -46,7 +46,7 @@ const DashboardArtisan = () => {
       try {
         const data = await getMe();
         
-        // 🔥 Récupérer la commune depuis localStorage si absente de l'API
+        // Récupérer la commune depuis localStorage si absente de l'API
         const storedUser = JSON.parse(localStorage.getItem("user") || "{}");
         if (!data.commune && storedUser.commune) {
           data.commune = storedUser.commune;
@@ -62,7 +62,7 @@ const DashboardArtisan = () => {
     fetchUser();
   }, [navigate]);
 
-  // Récupérer les demandes disponibles pour l'artisan (même commune)
+  // Récupérer les demandes disponibles pour l'artisan
   const fetchDemandes = async () => {
     try {
       const storedUser = localStorage.getItem("user");
@@ -73,6 +73,7 @@ const DashboardArtisan = () => {
       
       const userData = JSON.parse(storedUser);
       const artisanId = userData.id;
+      const artisanCommune = userData.commune || user?.commune;
       
       if (!artisanId) {
         console.error("ID artisan non trouvé");
@@ -81,10 +82,28 @@ const DashboardArtisan = () => {
       }
       
       console.log("📡 Chargement des demandes disponibles pour artisan ID:", artisanId);
-      const data = await getDemandesDisponiblesByArtisanId(artisanId);
-      console.log("📋 Demandes disponibles reçues:", data);
+      console.log("📍 Commune de l'artisan pour filtrage:", artisanCommune);
       
-      setDemandes(Array.isArray(data) ? data : []);
+      const data = await getDemandesDisponiblesByArtisanId(artisanId);
+      console.log("📋 Demandes disponibles reçues (brut):", data);
+      
+      // ✅ FILTRAGE PAR COMMUNE (côté frontend si backend ne filtre pas)
+      let filteredDemandes = Array.isArray(data) ? data : [];
+      
+      if (artisanCommune) {
+        filteredDemandes = filteredDemandes.filter(demande => {
+          // Vérifier si la demande a la même commune que l'artisan
+          const demandeCommune = (demande as any).commune || (demande as any).localisation;
+          const match = demandeCommune === artisanCommune;
+          if (!match) {
+            console.log(`❌ Demande ${demande.id} ignorée: commune "${demandeCommune}" ≠ "${artisanCommune}"`);
+          }
+          return match;
+        });
+        console.log(`✅ Après filtrage par commune "${artisanCommune}": ${filteredDemandes.length} demande(s)`);
+      }
+      
+      setDemandes(filteredDemandes);
     } catch (err) {
       console.error("Erreur chargement demandes", err);
     } finally {
@@ -253,7 +272,7 @@ const DashboardArtisan = () => {
               <div>
                 <h2 className="text-xl font-bold text-gray-800">Demandes disponibles</h2>
                 {user?.commune && (
-                  <p className="text-sm text-blue-600 mt-1 flex items-center gap-1">
+                  <p className="text-sm text-green-600 mt-1 flex items-center gap-1 bg-green-50 px-3 py-1 rounded-full">
                     <MapPin size={14} />
                     Demandes dans votre commune : <strong>{user.commune}</strong>
                   </p>
@@ -299,7 +318,7 @@ const DashboardArtisan = () => {
                 <ClipboardList size={48} className="mx-auto text-gray-300 mb-3" />
                 <p className="text-gray-500">Aucune demande disponible</p>
                 <p className="text-sm text-gray-400 mt-1">
-                  Les demandes des clients de votre commune apparaîtront ici
+                  Les demandes des clients de votre commune (<strong>{user?.commune || "non définie"}</strong>) apparaîtront ici
                 </p>
               </div>
             ) : (
@@ -339,7 +358,7 @@ const DashboardArtisan = () => {
                             </span>
                             <span className="flex items-center gap-1">
                               <MapPin size={14} />
-                              Localisation: {demande.localisation || user?.commune || "Abidjan"}
+                              Localisation: {(demande as any).commune || demande.localisation || user?.commune || "Abidjan"}
                             </span>
                           </div>
                         </div>

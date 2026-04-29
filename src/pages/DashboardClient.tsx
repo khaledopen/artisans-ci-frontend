@@ -1,5 +1,3 @@
-// src/pages/DashboardClient.tsx
-
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Navbar from "../components/Navbar";
@@ -16,6 +14,8 @@ import {
   Loader2,
   LogOut,
   Wrench,
+  Star,
+  User,
 } from "lucide-react";
 import { getMe } from "../api/auth.api";
 import { getDemandesByClientId } from "../api/demande.api";
@@ -40,7 +40,13 @@ const DashboardClient = () => {
     const fetchUser = async () => {
       try {
         const data = await getMe();
+        // Récupérer la commune depuis localStorage si absente
+        const storedUser = JSON.parse(localStorage.getItem("user") || "{}");
+        if (!data.commune && storedUser.commune) {
+          data.commune = storedUser.commune;
+        }
         setUser(data);
+        console.log("👤 Client connecté:", data);
       } catch {
         navigate("/login");
       }
@@ -98,6 +104,20 @@ const DashboardClient = () => {
 
   const initiales = user ? `${user.prenom?.charAt(0) || ""}${user.nom?.charAt(0) || ""}` : "?";
 
+  // Afficher la localisation complète (commune + ville)
+  const getLocalisation = () => {
+    if (user?.commune && user?.localisation) {
+      return `${user.commune}, ${user.localisation}`;
+    }
+    if (user?.commune) {
+      return user.commune;
+    }
+    if (user?.localisation) {
+      return user.localisation;
+    }
+    return "Abidjan";
+  };
+
   return (
     <>
       <Navbar
@@ -128,7 +148,7 @@ const DashboardClient = () => {
                     {user?.prenom} {user?.nom}
                   </h1>
                   <p className="text-blue-200 text-sm flex items-center gap-1 mt-1">
-                    <MapPin size={14} /> {user?.localisation || "Abidjan"}
+                    <MapPin size={14} /> {getLocalisation()}
                   </p>
                 </div>
               </div>
@@ -167,7 +187,6 @@ const DashboardClient = () => {
           <div className="bg-white rounded-2xl shadow-lg p-6">
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
               <h2 className="text-xl font-bold text-gray-800">Mes demandes de service</h2>
-              {/* ✅ CORRECTION ICI : redirige vers /creer-demande */}
               <button
                 onClick={() => navigate("/creer-demande")}
                 className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-xl hover:bg-blue-700 transition"
@@ -210,7 +229,6 @@ const DashboardClient = () => {
               <div className="text-center py-16">
                 <ClipboardList size={48} className="mx-auto text-gray-300 mb-3" />
                 <p className="text-gray-500">Aucune demande trouvée</p>
-                {/* ✅ CORRECTION ICI aussi */}
                 <button
                   onClick={() => navigate("/creer-demande")}
                   className="mt-4 text-blue-600 hover:underline"
@@ -223,6 +241,8 @@ const DashboardClient = () => {
                 {demandesFiltrees.map((demande) => {
                   const config = statutConfig[demande.statutDemande] || statutConfig.EN_ATTENTE;
                   const Icon = config.icon;
+                  const peutCommenter = demande.statutDemande === "TERMINEE" && !demande.commentaireId;
+                  
                   return (
                     <div
                       key={demande.id}
@@ -240,6 +260,11 @@ const DashboardClient = () => {
                               <Calendar size={12} />
                               {new Date(demande.dateRendezVous).toLocaleDateString("fr-FR")}
                             </span>
+                            {demande.commentaireId && (
+                              <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full flex items-center gap-1">
+                                <Star size={10} /> Avis laissé
+                              </span>
+                            )}
                           </div>
                           <p className="font-semibold text-gray-800">{demande.descriptionTravail}</p>
                           {demande.artisanName && (
@@ -249,7 +274,22 @@ const DashboardClient = () => {
                             </p>
                           )}
                         </div>
-                        <ChevronRight className="text-gray-300" />
+                        <div className="flex items-center gap-3">
+                          {peutCommenter && (
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                navigate(`/laisser-avis/${demande.id}`, { 
+                                  state: { artisanId: demande.artisanId, artisanName: demande.artisanName }
+                                });
+                              }}
+                              className="flex items-center gap-1 px-3 py-1.5 bg-yellow-500 text-white rounded-lg text-sm hover:bg-yellow-600 transition"
+                            >
+                              <Star size={14} /> Laisser un avis
+                            </button>
+                          )}
+                          <ChevronRight className="text-gray-300" />
+                        </div>
                       </div>
                     </div>
                   );
