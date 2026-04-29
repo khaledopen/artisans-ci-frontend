@@ -1,5 +1,12 @@
+// src/api/demande.api.ts
+
 import api from "./axios";
-import type { CreateDemandeData, DemandeResponse, DemandeClientResponse, DemandeArtisanResponse } from "../types/demande";
+import type { 
+  CreateDemandeData, 
+  DemandeResponse, 
+  DemandeClientResponse, 
+  DemandeArtisanResponse 
+} from "../types/demande";
 
 // ========== CRÉATION ==========
 export const createDemandeWithPhoto = async (demandeData: CreateDemandeData, photoFile?: File): Promise<DemandeResponse> => {
@@ -18,15 +25,23 @@ export const getDemandeById = (id: number): Promise<DemandeResponse> => api.get(
 export const getDemandesByClientId = (clientId: number): Promise<DemandeClientResponse[]> => api.get(`/demandes/client/${clientId}`).then(res => res.data);
 export const getDemandesDisponiblesByArtisanId = (artisanId: number): Promise<DemandeArtisanResponse[]> => api.get(`/demandes/disponibles/artisan/${artisanId}`).then(res => res.data);
 export const getDemandesByArtisanId = (artisanId: number): Promise<DemandeArtisanResponse[]> => api.get(`/demandes/artisan/${artisanId}`).then(res => res.data);
-export const getDemandeDescription = (id: number): Promise<{ description: string }> => api.get(`/demands/${id}/description`).then(res => res.data);
+export const getDemandeDescription = (id: number): Promise<{ description: string }> => api.get(`/demandes/${id}/description`).then(res => res.data);
 export const getDemandeDateRendezVous = (id: number): Promise<{ date: string }> => api.get(`/demandes/${id}/date-rendezvous`).then(res => res.data);
 export const getDemandeStatut = (id: number): Promise<{ statut: string }> => api.get(`/demandes/${id}/statut`).then(res => res.data);
 export const getDemandeHeure = (id: number): Promise<{ heure: string }> => api.get(`/demandes/${id}/heure`).then(res => res.data);
 export const getDemandePhotos = (id: number): Promise<string[]> => api.get(`/demandes/${id}/photo`).then(res => res.data);
 
 // ========== ACTIONS ARTISAN ==========
-export const accepterDemande = (demandeId: number, artisanId: number): Promise<DemandeResponse> => api.post(`/demandes/${demandeId}/accepter/${artisanId}`).then(res => res.data);
-export const updateDemandeStatutArtisan = (demandeId: number, statut: "EN_COURS" | "TERMINEE"): Promise<DemandeResponse> => api.put(`/demandes/${demandeId}/statut`, `"${statut}"`, { headers: { "Content-Type": "application/json" } }).then(res => res.data);
+export const accepterDemande = (demandeId: number, artisanId: number): Promise<DemandeResponse> => {
+  console.log(`📡 Acceptation: /demandes/${demandeId}/accepter/${artisanId}`);
+  return api.post(`/demandes/${demandeId}/accepter/${artisanId}`).then(res => res.data);
+};
+
+export const updateDemandeStatutArtisan = (demandeId: number, statut: "EN_COURS" | "TERMINEE"): Promise<DemandeResponse> => {
+  return api.put(`/demandes/${demandeId}/statut`, `"${statut}"`, { 
+    headers: { "Content-Type": "application/json" } 
+  }).then(res => res.data);
+};
 
 // ========== ADMIN ==========
 export const getAdminDemandes = async (page = 0, size = 10): Promise<DemandeResponse[]> => {

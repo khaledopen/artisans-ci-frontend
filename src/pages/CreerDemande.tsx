@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
 import { createDemandeWithPhoto } from "../api/demande.api";
-import { Loader2, AlertCircle, Calendar, FileText, Upload, X, Info, MapPin, User } from "lucide-react";
+import { Loader2, AlertCircle, Calendar, FileText, Upload, X, Info, MapPin, User, Phone } from "lucide-react";
 
 const CreerDemande = () => {
   const navigate = useNavigate();
@@ -24,12 +24,11 @@ const CreerDemande = () => {
   const clientId = user.id;
   const clientLocalisation = user.localisation || "Abidjan";
   const clientCommune = user.commune || "";
+  const clientTelephone = user.telephone || "";
 
   useEffect(() => {
     const artisanId = localStorage.getItem("selectedArtisanId");
     const artisanName = localStorage.getItem("selectedArtisanName");
-    
-    console.log("🔍 Récupération localStorage:", { artisanId, artisanName });
     
     if (artisanId && artisanName) {
       setSelectedArtisan({
@@ -80,16 +79,16 @@ const CreerDemande = () => {
         date_rendez_vous: form.date_rendez_vous,
         description_travail: form.description_travail,
         clientId: clientId,
-        artisanId: selectedArtisan.id,  // ← ID de l'artisan sélectionné
+        artisanId: selectedArtisan.id,
         commune: clientCommune,
         localisation: clientLocalisation,
+        telephone: clientTelephone,
       };
 
-      console.log("📤 Envoi de la demande avec artisanId:", demandeData);
+      console.log("📤 Envoi de la demande:", demandeData);
       
       await createDemandeWithPhoto(demandeData, photo || undefined);
       
-      // Nettoyer le localStorage
       localStorage.removeItem("selectedArtisanId");
       localStorage.removeItem("selectedArtisanName");
       
@@ -100,8 +99,8 @@ const CreerDemande = () => {
       }, 2000);
       
     } catch (err: any) {
-      console.error("Erreur détaillée:", err);
-      setError(err.response?.data?.message || "Erreur lors de l'envoi de la demande");
+      console.error("Erreur:", err);
+      setError(err.response?.data?.message || "Erreur lors de l'envoi");
     } finally {
       setLoading(false);
     }
@@ -121,7 +120,6 @@ const CreerDemande = () => {
 
       <div className="min-h-screen bg-gray-50 py-12">
         <div className="max-w-2xl mx-auto px-6">
-          
           <div className="mb-8">
             <button
               onClick={() => navigate("/artisans")}
@@ -130,9 +128,7 @@ const CreerDemande = () => {
               ← Retour aux artisans
             </button>
             <h1 className="text-3xl font-bold text-gray-800">Nouvelle demande de service</h1>
-            <p className="text-gray-500 mt-1">
-              Remplissez le formulaire ci-dessous.
-            </p>
+            <p className="text-gray-500 mt-1">Remplissez le formulaire ci-dessous.</p>
           </div>
 
           <div className="bg-white rounded-2xl shadow-lg overflow-hidden">
@@ -142,9 +138,8 @@ const CreerDemande = () => {
             </div>
 
             <div className="p-6">
-              
               {error && (
-                <div className="mb-6 p-3 bg-red-50 border border-red-200 rounded-xl text-red-600 text-sm flex items-center gap-2">
+                <div className="mb-6 p-3 bg-red-50 border border-red-200 rounded-xl flex items-center gap-2 text-red-600 text-sm">
                   <AlertCircle size={16} />
                   {error}
                 </div>
@@ -156,7 +151,6 @@ const CreerDemande = () => {
                 </div>
               )}
 
-              {/* Artisan sélectionné */}
               {selectedArtisan && (
                 <div className="mb-6 p-4 bg-blue-50 rounded-xl border border-blue-100">
                   <p className="text-sm text-blue-700 flex items-center gap-2">
@@ -166,12 +160,17 @@ const CreerDemande = () => {
                 </div>
               )}
 
-              {/* Localisation du client */}
               <div className="mb-6 p-4 bg-green-50 rounded-xl border border-green-100">
                 <p className="text-sm text-green-700 flex items-center gap-2">
                   <MapPin size={16} />
                   Votre localisation : <strong>{clientCommune ? `${clientCommune}, ` : ""}{clientLocalisation}</strong>
                 </p>
+                {clientTelephone && (
+                  <p className="text-sm text-green-700 flex items-center gap-2 mt-2">
+                    <Phone size={16} />
+                    Téléphone : <strong>{clientTelephone}</strong>
+                  </p>
+                )}
               </div>
 
               <form className="space-y-5" onSubmit={(e) => e.preventDefault()}>
@@ -210,19 +209,10 @@ const CreerDemande = () => {
                     <label className="cursor-pointer bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2.5 rounded-xl transition flex items-center gap-2">
                       <Upload size={16} />
                       Choisir une photo
-                      <input
-                        type="file"
-                        accept="image/*"
-                        onChange={handlePhotoChange}
-                        className="hidden"
-                      />
+                      <input type="file" accept="image/*" onChange={handlePhotoChange} className="hidden" />
                     </label>
                     {photo && (
-                      <button
-                        type="button"
-                        onClick={removePhoto}
-                        className="text-red-500 hover:text-red-700 text-sm flex items-center gap-1"
-                      >
+                      <button type="button" onClick={removePhoto} className="text-red-500 hover:text-red-700 text-sm flex items-center gap-1">
                         <X size={16} /> Supprimer
                       </button>
                     )}
@@ -240,14 +230,7 @@ const CreerDemande = () => {
                   disabled={loading}
                   className="w-full bg-gradient-to-r from-blue-600 to-blue-700 text-white py-3 rounded-xl font-semibold hover:from-blue-700 hover:to-blue-800 transition disabled:opacity-70 flex items-center justify-center gap-2 mt-6"
                 >
-                  {loading ? (
-                    <>
-                      <Loader2 size={18} className="animate-spin" />
-                      Envoi en cours...
-                    </>
-                  ) : (
-                    "Envoyer la demande"
-                  )}
+                  {loading ? <><Loader2 size={18} className="animate-spin" /> Envoi en cours...</> : "Envoyer la demande"}
                 </button>
               </form>
 
@@ -256,9 +239,7 @@ const CreerDemande = () => {
                   <Info size={18} className="text-blue-500 mt-0.5" />
                   <div>
                     <p className="text-sm font-medium text-gray-700">Comment ça marche ?</p>
-                    <p className="text-xs text-gray-500 mt-1">
-                      Votre demande sera envoyée à l'artisan sélectionné.
-                    </p>
+                    <p className="text-xs text-gray-500 mt-1">Votre demande sera envoyée à l'artisan sélectionné.</p>
                   </div>
                 </div>
               </div>
@@ -266,7 +247,6 @@ const CreerDemande = () => {
           </div>
         </div>
       </div>
-
       <Footer />
     </>
   );

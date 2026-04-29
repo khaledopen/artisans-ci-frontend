@@ -3,13 +3,14 @@
 export interface LoginData {
   email: string;
   motpasse: string;
-  role?: "CLIENT" | "ARTISAN";  // ← AJOUTÉ (optionnel pour admin)
+  role?: "CLIENT" | "ARTISAN";
 }
 
 export interface RegisterClientData {
   nom: string;
   prenom: string;
   email: string;
+  telephone: string;      // ← AJOUTÉ
   motpasse: string;
   localisation: string;
   commune: string;
@@ -19,6 +20,7 @@ export interface RegisterArtisanData {
   nom: string;
   prenom: string;
   email: string;
+  telephone: string;      // ← AJOUTÉ
   motpasse: string;
   localisation: string;
   commune: string;
@@ -33,6 +35,7 @@ export interface AuthResponse {
     nom: string;
     prenom: string;
     email: string;
+    telephone?: string;    // ← AJOUTÉ
     role: string;
     localisation?: string;
     commune?: string;
@@ -45,6 +48,7 @@ export interface UserProfile {
   nom: string;
   prenom: string;
   email: string;
+  telephone?: string;      // ← AJOUTÉ
   role: string;
   localisation?: string;
   commune?: string;

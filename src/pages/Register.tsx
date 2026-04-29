@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Navbar from "../components/Navbar";
-import { User, Briefcase, MapPin, Loader2, CheckCircle, AlertCircle } from "lucide-react";
+import { User, Briefcase, MapPin, Phone, Loader2, CheckCircle, AlertCircle } from "lucide-react";
 import { registerClient, registerArtisan } from "../api/auth.api";
 
 type Role = "CLIENT" | "ARTISAN";
@@ -17,6 +17,7 @@ const Register = () => {
     nom: "",
     prenom: "",
     email: "",
+    telephone: "",
     motpasse: "",
     confirmPassword: "",
     localisation: "Abidjan",
@@ -33,7 +34,7 @@ const Register = () => {
       return;
     }
 
-    if (!form.nom || !form.prenom || !form.email || !form.motpasse) {
+    if (!form.nom || !form.prenom || !form.email || !form.telephone || !form.motpasse) {
       setError("Tous les champs sont obligatoires");
       return;
     }
@@ -58,6 +59,12 @@ const Register = () => {
       return;
     }
 
+    // Validation basique du téléphone
+    if (!/^[0-9+\s-]{8,}$/.test(form.telephone)) {
+      setError("Veuillez entrer un numéro de téléphone valide");
+      return;
+    }
+
     setLoading(true);
 
     try {
@@ -68,6 +75,7 @@ const Register = () => {
           nom: form.nom,
           prenom: form.prenom,
           email: form.email,
+          telephone: form.telephone,
           motpasse: form.motpasse,
           localisation: form.localisation,
           commune: form.commune,
@@ -77,6 +85,7 @@ const Register = () => {
           nom: form.nom,
           prenom: form.prenom,
           email: form.email,
+          telephone: form.telephone,
           motpasse: form.motpasse,
           localisation: form.localisation,
           commune: form.commune,
@@ -200,6 +209,19 @@ const Register = () => {
                 onChange={(e) => setForm({ ...form, email: e.target.value })}
                 className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-blue-400 focus:ring-2 focus:ring-blue-200 outline-none transition"
               />
+
+              {/* Champ Téléphone */}
+              <div className="relative">
+                <Phone size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                <input
+                  type="tel"
+                  placeholder="Numéro de téléphone"
+                  value={form.telephone}
+                  onChange={(e) => setForm({ ...form, telephone: e.target.value })}
+                  className="w-full pl-10 pr-4 py-3 rounded-xl border border-gray-200 focus:border-blue-400 focus:ring-2 focus:ring-blue-200 outline-none transition"
+                  required
+                />
+              </div>
 
               {/* Localisation et commune */}
               <div className="grid grid-cols-2 gap-3">
