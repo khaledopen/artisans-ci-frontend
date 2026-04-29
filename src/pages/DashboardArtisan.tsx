@@ -18,16 +18,15 @@ import {
   Users,
   Settings,
   Check,
-  X,
 } from "lucide-react";
 import { getMe } from "../api/auth.api";
-import { getDemandesDisponiblesByArtisanId } from "../api/demande.api";
+import { getDemandesByArtisanId, accepterDemande, updateDemandeStatutArtisan } from "../api/demande.api";
 import type { DemandeArtisanResponse } from "../types/demande";
-import api from "../api/axios";
 
 const statutConfig: Record<string, { label: string; bg: string; text: string; border: string; icon: any }> = {
   EN_ATTENTE: { label: "En attente", bg: "bg-amber-50", text: "text-amber-700", border: "border-amber-200", icon: Clock },
   ACCEPTEE: { label: "Acceptée", bg: "bg-blue-50", text: "text-blue-700", border: "border-blue-200", icon: CheckCircle },
+  EN_COURS: { label: "En cours", bg: "bg-purple-50", text: "text-purple-700", border: "border-purple-200", icon: Clock },
   TERMINEE: { label: "Terminée", bg: "bg-green-50", text: "text-green-700", border: "border-green-200", icon: CheckCircle },
   REFUSEE: { label: "Refusée", bg: "bg-red-50", text: "text-red-600", border: "border-red-200", icon: XCircle },
 };
@@ -40,21 +39,14 @@ const DashboardArtisan = () => {
   const [activeFilter, setActiveFilter] = useState<string>("TOUTES");
   const [actionLoading, setActionLoading] = useState<number | null>(null);
 
-  // Récupérer l'utilisateur connecté
   useEffect(() => {
     const fetchUser = async () => {
       try {
         const data = await getMe();
-        
-        // Récupérer la commune depuis localStorage si absente de l'API
         const storedUser = JSON.parse(localStorage.getItem("user") || "{}");
-        if (!data.commune && storedUser.commune) {
-          data.commune = storedUser.commune;
-        }
-        
-        setUser(data);
-        console.log("👨‍🔧 Artisan connecté:", data);
-        console.log("📍 Commune de l'artisan:", data.commune);
+        const commune = data.commune || storedUser.commune || "Cocody";
+        setUser({ ...data, commune });
+        console.log("👨‍🔧 Artisan connecté:", { ...data, commune });
       } catch {
         navigate("/login");
       }
@@ -62,7 +54,7 @@ const DashboardArtisan = () => {
     fetchUser();
   }, [navigate]);
 
-  // Récupérer les demandes disponibles pour l'artisan
+  // ✅ Utiliser getDemandesByArtisanId au lieu de getDemandesDisponiblesByArtisanId
   const fetchDemandes = async () => {
     try {
       const storedUser = localStorage.getItem("user");
@@ -73,7 +65,6 @@ const DashboardArtisan = () => {
       
       const userData = JSON.parse(storedUser);
       const artisanId = userData.id;
-      const artisanCommune = userData.commune || user?.commune;
       
       if (!artisanId) {
         console.error("ID artisan non trouvé");
@@ -81,29 +72,11 @@ const DashboardArtisan = () => {
         return;
       }
       
-      console.log("📡 Chargement des demandes disponibles pour artisan ID:", artisanId);
-      console.log("📍 Commune de l'artisan pour filtrage:", artisanCommune);
+      console.log("📡 Appel API: /demandes/artisan/" + artisanId);
+      const data = await getDemandesByArtisanId(artisanId);
+      console.log("📋 Demandes reçues:", data);
       
-      const data = await getDemandesDisponiblesByArtisanId(artisanId);
-      console.log("📋 Demandes disponibles reçues (brut):", data);
-      
-      // ✅ FILTRAGE PAR COMMUNE (côté frontend si backend ne filtre pas)
-      let filteredDemandes = Array.isArray(data) ? data : [];
-      
-      if (artisanCommune) {
-        filteredDemandes = filteredDemandes.filter(demande => {
-          // Vérifier si la demande a la même commune que l'artisan
-          const demandeCommune = (demande as any).commune || (demande as any).localisation;
-          const match = demandeCommune === artisanCommune;
-          if (!match) {
-            console.log(`❌ Demande ${demande.id} ignorée: commune "${demandeCommune}" ≠ "${artisanCommune}"`);
-          }
-          return match;
-        });
-        console.log(`✅ Après filtrage par commune "${artisanCommune}": ${filteredDemandes.length} demande(s)`);
-      }
-      
-      setDemandes(filteredDemandes);
+      setDemandes(Array.isArray(data) ? data : []);
     } catch (err) {
       console.error("Erreur chargement demandes", err);
     } finally {
@@ -115,33 +88,40 @@ const DashboardArtisan = () => {
     fetchDemandes();
   }, []);
 
-  // Accepter une demande
   const handleAccepter = async (demandeId: number, e: React.MouseEvent) => {
     e.stopPropagation();
     setActionLoading(demandeId);
     
     try {
-      await api.put(`/demandes/${demandeId}/accepter`);
+      const storedUser = localStorage.getItem("user");
+      const userData = JSON.parse(storedUser || "{}");
+      const artisanId = userData.id;
+      
+      await accepterDemande(demandeId, artisanId);
       console.log("✅ Demande acceptée:", demandeId);
       await fetchDemandes();
-    } catch (err) {
-      console.error("Erreur lors de l'acceptation", err);
+      alert("✅ Demande acceptée avec succès !");
+    } catch (err: any) {
+      console.error("Erreur:", err);
+      const message = err.response?.data?.message || "Cette demande n'est plus disponible";
+      alert(message);
     } finally {
       setActionLoading(null);
     }
   };
 
-  // Refuser une demande
-  const handleRefuser = async (demandeId: number, e: React.MouseEvent) => {
+  const handleUpdateStatut = async (demandeId: number, nouveauStatut: string, e: React.MouseEvent) => {
     e.stopPropagation();
     setActionLoading(demandeId);
     
     try {
-      await api.put(`/demandes/${demandeId}/refuser`);
-      console.log("❌ Demande refusée:", demandeId);
+      await updateDemandeStatutArtisan(demandeId, nouveauStatut as "EN_COURS" | "TERMINEE");
+      console.log(`✅ Demande ${demandeId} passée en ${nouveauStatut}`);
       await fetchDemandes();
+      alert(`✅ Demande ${nouveauStatut === "EN_COURS" ? "en cours" : "terminée"}`);
     } catch (err) {
-      console.error("Erreur lors du refus", err);
+      console.error("Erreur:", err);
+      alert("Erreur lors de la mise à jour");
     } finally {
       setActionLoading(null);
     }
@@ -156,6 +136,7 @@ const DashboardArtisan = () => {
     total: demandes.length,
     enAttente: demandes.filter((d) => d.statutDemande === "EN_ATTENTE").length,
     acceptees: demandes.filter((d) => d.statutDemande === "ACCEPTEE").length,
+    enCours: demandes.filter((d) => d.statutDemande === "EN_COURS").length,
     terminees: demandes.filter((d) => d.statutDemande === "TERMINEE").length,
   };
 
@@ -166,17 +147,6 @@ const DashboardArtisan = () => {
 
   const initiales = user ? `${user.prenom?.charAt(0) || ""}${user.nom?.charAt(0) || ""}` : "?";
 
-  // Formater l'heure si c'est un objet
-  const formatHeure = (heure: any) => {
-    if (!heure) return "Non spécifiée";
-    if (typeof heure === "string") return heure;
-    if (typeof heure === "object" && heure.hour !== undefined) {
-      return `${heure.hour.toString().padStart(2, "0")}:${heure.minute.toString().padStart(2, "0")}`;
-    }
-    return "Non spécifiée";
-  };
-
-  // Afficher la localisation correctement
   const getLocalisation = () => {
     if (user?.commune && user?.localisation) {
       return `${user.commune}, ${user.localisation}`;
@@ -202,7 +172,6 @@ const DashboardArtisan = () => {
       />
 
       <div className="min-h-screen bg-gray-50">
-        {/* Header avec dégradé */}
         <div className="bg-gradient-to-r from-blue-600 to-blue-800 pt-10 pb-20 px-4">
           <div className="max-w-6xl mx-auto">
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-10">
@@ -243,7 +212,6 @@ const DashboardArtisan = () => {
               </div>
             </div>
 
-            {/* Statistiques */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               <div className="bg-white/10 rounded-2xl p-4 backdrop-blur-sm">
                 <p className="text-blue-200 text-sm">Total demandes</p>
@@ -265,16 +233,15 @@ const DashboardArtisan = () => {
           </div>
         </div>
 
-        {/* Contenu principal */}
         <div className="max-w-6xl mx-auto px-4 -mt-8 pb-12">
           <div className="bg-white rounded-2xl shadow-lg p-6">
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
               <div>
-                <h2 className="text-xl font-bold text-gray-800">Demandes disponibles</h2>
+                <h2 className="text-xl font-bold text-gray-800">Mes demandes</h2>
                 {user?.commune && (
                   <p className="text-sm text-green-600 mt-1 flex items-center gap-1 bg-green-50 px-3 py-1 rounded-full">
                     <MapPin size={14} />
-                    Demandes dans votre commune : <strong>{user.commune}</strong>
+                    Vos demandes pour : <strong>{user.commune}</strong>
                   </p>
                 )}
               </div>
@@ -283,9 +250,8 @@ const DashboardArtisan = () => {
               </div>
             </div>
 
-            {/* Filtres */}
             <div className="flex flex-wrap gap-2 mb-6">
-              {["TOUTES", "EN_ATTENTE", "ACCEPTEE", "TERMINEE", "REFUSEE"].map((f) => (
+              {["TOUTES", "EN_ATTENTE", "ACCEPTEE", "EN_COURS", "TERMINEE"].map((f) => (
                 <button
                   key={f}
                   onClick={() => setActiveFilter(f)}
@@ -295,20 +261,11 @@ const DashboardArtisan = () => {
                       : "bg-gray-100 text-gray-600 hover:bg-gray-200"
                   }`}
                 >
-                  {f === "TOUTES"
-                    ? "Toutes"
-                    : f === "EN_ATTENTE"
-                    ? "En attente"
-                    : f === "ACCEPTEE"
-                    ? "Acceptées"
-                    : f === "TERMINEE"
-                    ? "Terminées"
-                    : "Refusées"}
+                  {f === "TOUTES" ? "Toutes" : statutConfig[f]?.label || f}
                 </button>
               ))}
             </div>
 
-            {/* Liste des demandes */}
             {loading ? (
               <div className="flex justify-center py-16">
                 <Loader2 className="animate-spin text-blue-600" size={32} />
@@ -316,9 +273,9 @@ const DashboardArtisan = () => {
             ) : demandesFiltrees.length === 0 ? (
               <div className="text-center py-16">
                 <ClipboardList size={48} className="mx-auto text-gray-300 mb-3" />
-                <p className="text-gray-500">Aucune demande disponible</p>
+                <p className="text-gray-500">Aucune demande</p>
                 <p className="text-sm text-gray-400 mt-1">
-                  Les demandes des clients de votre commune (<strong>{user?.commune || "non définie"}</strong>) apparaîtront ici
+                  Les demandes des clients apparaîtront ici
                 </p>
               </div>
             ) : (
@@ -345,51 +302,43 @@ const DashboardArtisan = () => {
                               <Calendar size={12} />
                               {new Date(demande.dateRendezVous).toLocaleDateString("fr-FR")}
                             </span>
-                            <span className="text-xs text-gray-400 flex items-center gap-1">
-                              <Clock size={12} />
-                              {formatHeure(demande.heure)}
-                            </span>
                           </div>
                           <p className="font-semibold text-gray-800">{demande.descriptionTravail}</p>
-                          <div className="mt-2 flex flex-wrap gap-3 text-sm text-gray-500">
+                          <div className="mt-2 flex-wrap gap-3 text-sm text-gray-500">
                             <span className="flex items-center gap-1">
                               <Users size={14} />
-                              Client: {demande.clientName}
-                            </span>
-                            <span className="flex items-center gap-1">
-                              <MapPin size={14} />
-                              Localisation: {(demande as any).commune || demande.localisation || user?.commune || "Abidjan"}
+                              Client: {demande.clientName} - {demande.clientCommune}
                             </span>
                           </div>
                         </div>
                         <div className="flex gap-2">
                           {demande.statutDemande === "EN_ATTENTE" && (
-                            <>
-                              <button
-                                onClick={(e) => handleAccepter(demande.id, e)}
-                                disabled={isActionLoading}
-                                className="flex items-center gap-1 px-3 py-1 bg-green-600 text-white rounded-lg text-sm hover:bg-green-700 transition disabled:opacity-50"
-                              >
-                                {isActionLoading ? (
-                                  <Loader2 size={14} className="animate-spin" />
-                                ) : (
-                                  <Check size={14} />
-                                )}
-                                Accepter
-                              </button>
-                              <button
-                                onClick={(e) => handleRefuser(demande.id, e)}
-                                disabled={isActionLoading}
-                                className="flex items-center gap-1 px-3 py-1 bg-red-600 text-white rounded-lg text-sm hover:bg-red-700 transition disabled:opacity-50"
-                              >
-                                {isActionLoading ? (
-                                  <Loader2 size={14} className="animate-spin" />
-                                ) : (
-                                  <X size={14} />
-                                )}
-                                Refuser
-                              </button>
-                            </>
+                            <button
+                              onClick={(e) => handleAccepter(demande.id, e)}
+                              disabled={isActionLoading}
+                              className="flex items-center gap-1 px-3 py-1 bg-green-600 text-white rounded-lg text-sm hover:bg-green-700 transition disabled:opacity-50"
+                            >
+                              {isActionLoading ? <Loader2 size={14} className="animate-spin" /> : <Check size={14} />}
+                              Accepter
+                            </button>
+                          )}
+                          {demande.statutDemande === "ACCEPTEE" && (
+                            <button
+                              onClick={(e) => handleUpdateStatut(demande.id, "EN_COURS", e)}
+                              disabled={isActionLoading}
+                              className="px-3 py-1 bg-purple-600 text-white rounded-lg text-sm hover:bg-purple-700 transition"
+                            >
+                              Démarrer
+                            </button>
+                          )}
+                          {demande.statutDemande === "EN_COURS" && (
+                            <button
+                              onClick={(e) => handleUpdateStatut(demande.id, "TERMINEE", e)}
+                              disabled={isActionLoading}
+                              className="px-3 py-1 bg-blue-600 text-white rounded-lg text-sm hover:bg-blue-700 transition"
+                            >
+                              Terminer
+                            </button>
                           )}
                           <ChevronRight className="text-gray-300" />
                         </div>

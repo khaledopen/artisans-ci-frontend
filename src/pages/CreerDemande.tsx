@@ -1,9 +1,9 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
 import { createDemandeWithPhoto } from "../api/demande.api";
-import { Loader2, AlertCircle, Calendar, FileText, Upload, X, Info, MapPin } from "lucide-react";
+import { Loader2, AlertCircle, Calendar, FileText, Upload, X, Info, MapPin, User } from "lucide-react";
 
 const CreerDemande = () => {
   const navigate = useNavigate();
@@ -11,7 +11,6 @@ const CreerDemande = () => {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   
-  // Formulaire
   const [form, setForm] = useState({
     date_rendez_vous: "",
     description_travail: "",
@@ -19,12 +18,26 @@ const CreerDemande = () => {
   
   const [photo, setPhoto] = useState<File | null>(null);
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
+  const [selectedArtisan, setSelectedArtisan] = useState<{ id: number; name: string } | null>(null);
 
-  // Récupérer les infos du client connecté
   const user = JSON.parse(localStorage.getItem("user") || "{}");
   const clientId = user.id;
   const clientLocalisation = user.localisation || "Abidjan";
   const clientCommune = user.commune || "";
+
+  useEffect(() => {
+    const artisanId = localStorage.getItem("selectedArtisanId");
+    const artisanName = localStorage.getItem("selectedArtisanName");
+    
+    console.log("🔍 Récupération localStorage:", { artisanId, artisanName });
+    
+    if (artisanId && artisanName) {
+      setSelectedArtisan({
+        id: parseInt(artisanId),
+        name: artisanName,
+      });
+    }
+  }, []);
 
   const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -55,32 +68,32 @@ const CreerDemande = () => {
       setError("Veuillez décrire les travaux");
       return;
     }
-
-    if (!clientCommune) {
-      console.warn("⚠️ Attention: Le client n'a pas de commune définie");
+    if (!selectedArtisan) {
+      setError("Aucun artisan sélectionné");
+      return;
     }
 
     setLoading(true);
 
     try {
-      // ✅ AJOUT DE LA COMMUNE dans la demande
       const demandeData = {
         date_rendez_vous: form.date_rendez_vous,
         description_travail: form.description_travail,
         clientId: clientId,
-        commune: clientCommune,  // ← AJOUTÉ : commune du client
-        localisation: clientLocalisation,  // ← AJOUTÉ : ville du client
+        artisanId: selectedArtisan.id,  // ← ID de l'artisan sélectionné
+        commune: clientCommune,
+        localisation: clientLocalisation,
       };
 
-      console.log("📤 Envoi de la demande avec localisation:", {
-        ...demandeData,
-        commune: clientCommune,
-        localisation: clientLocalisation
-      });
+      console.log("📤 Envoi de la demande avec artisanId:", demandeData);
       
       await createDemandeWithPhoto(demandeData, photo || undefined);
       
-      setSuccess(`Demande envoyée avec succès ! Un artisan de ${clientCommune || clientLocalisation} va la traiter.`);
+      // Nettoyer le localStorage
+      localStorage.removeItem("selectedArtisanId");
+      localStorage.removeItem("selectedArtisanName");
+      
+      setSuccess(`Demande envoyée avec succès à ${selectedArtisan.name} !`);
       
       setTimeout(() => {
         navigate("/dashboard-client");
@@ -88,7 +101,6 @@ const CreerDemande = () => {
       
     } catch (err: any) {
       console.error("Erreur détaillée:", err);
-      console.error("Réponse:", err.response?.data);
       setError(err.response?.data?.message || "Erreur lors de l'envoi de la demande");
     } finally {
       setLoading(false);
@@ -111,9 +123,15 @@ const CreerDemande = () => {
         <div className="max-w-2xl mx-auto px-6">
           
           <div className="mb-8">
+            <button
+              onClick={() => navigate("/artisans")}
+              className="text-gray-500 hover:text-gray-700 mb-4 flex items-center gap-2"
+            >
+              ← Retour aux artisans
+            </button>
             <h1 className="text-3xl font-bold text-gray-800">Nouvelle demande de service</h1>
             <p className="text-gray-500 mt-1">
-              Remplissez le formulaire ci-dessous. Un artisan proche de votre localisation sera automatiquement assigné.
+              Remplissez le formulaire ci-dessous.
             </p>
           </div>
 
@@ -138,14 +156,21 @@ const CreerDemande = () => {
                 </div>
               )}
 
-              {/* Information localisation avec la commune */}
-              <div className="mb-6 p-4 bg-blue-50 rounded-xl border border-blue-100">
-                <p className="text-sm text-blue-700 flex items-center gap-2">
+              {/* Artisan sélectionné */}
+              {selectedArtisan && (
+                <div className="mb-6 p-4 bg-blue-50 rounded-xl border border-blue-100">
+                  <p className="text-sm text-blue-700 flex items-center gap-2">
+                    <User size={16} />
+                    Artisan sélectionné : <strong>{selectedArtisan.name}</strong>
+                  </p>
+                </div>
+              )}
+
+              {/* Localisation du client */}
+              <div className="mb-6 p-4 bg-green-50 rounded-xl border border-green-100">
+                <p className="text-sm text-green-700 flex items-center gap-2">
                   <MapPin size={16} />
                   Votre localisation : <strong>{clientCommune ? `${clientCommune}, ` : ""}{clientLocalisation}</strong>
-                </p>
-                <p className="text-xs text-blue-600 mt-1">
-                  Un artisan de <strong>{clientCommune || clientLocalisation}</strong> recevra votre demande
                 </p>
               </div>
 
@@ -158,7 +183,7 @@ const CreerDemande = () => {
                     type="date"
                     value={form.date_rendez_vous}
                     onChange={(e) => setForm({ ...form, date_rendez_vous: e.target.value })}
-                    className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:border-blue-400 focus:ring-2 focus:ring-blue-200 outline-none transition"
+                    className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:border-blue-400 outline-none transition"
                     required
                   />
                 </div>
@@ -171,8 +196,8 @@ const CreerDemande = () => {
                     value={form.description_travail}
                     onChange={(e) => setForm({ ...form, description_travail: e.target.value })}
                     rows={5}
-                    className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:border-blue-400 focus:ring-2 focus:ring-blue-200 outline-none transition resize-none"
-                    placeholder="Décrivez précisément les travaux à réaliser (ex: fuite d'eau dans la cuisine, installation d'un chauffe-eau, etc.)"
+                    className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:border-blue-400 outline-none transition resize-none"
+                    placeholder="Décrivez précisément les travaux à réaliser..."
                     required
                   />
                 </div>
@@ -207,16 +232,13 @@ const CreerDemande = () => {
                       <img src={photoPreview} alt="Aperçu" className="w-32 h-32 object-cover rounded-xl border" />
                     </div>
                   )}
-                  <p className="text-xs text-gray-400 mt-1">
-                    Ajoutez une photo pour illustrer votre demande (format JPG, PNG)
-                  </p>
                 </div>
 
                 <button
                   type="button"
                   onClick={handleSubmit}
                   disabled={loading}
-                  className="w-full bg-gradient-to-r from-blue-600 to-blue-700 text-white py-3 rounded-xl font-semibold hover:from-blue-700 hover:to-blue-800 transition-all duration-200 shadow-md hover:shadow-lg disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center gap-2 mt-6"
+                  className="w-full bg-gradient-to-r from-blue-600 to-blue-700 text-white py-3 rounded-xl font-semibold hover:from-blue-700 hover:to-blue-800 transition disabled:opacity-70 flex items-center justify-center gap-2 mt-6"
                 >
                   {loading ? (
                     <>
@@ -235,8 +257,7 @@ const CreerDemande = () => {
                   <div>
                     <p className="text-sm font-medium text-gray-700">Comment ça marche ?</p>
                     <p className="text-xs text-gray-500 mt-1">
-                      Votre demande sera automatiquement envoyée aux artisans disponibles dans votre commune.
-                      Vous serez notifié dès qu'un artisan accepte votre demande.
+                      Votre demande sera envoyée à l'artisan sélectionné.
                     </p>
                   </div>
                 </div>

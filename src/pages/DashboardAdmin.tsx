@@ -7,7 +7,7 @@ import Footer from "../components/Footer";
 import {
   Users, Briefcase, ClipboardList, Loader2, LogOut,
   TrendingUp, Eye, Trash2, UserCheck, UserX, Search,
-  ChevronLeft, ChevronRight, Star, MapPin, Mail, Phone, Calendar
+  ChevronLeft, ChevronRight
 } from "lucide-react";
 import {
   getAdminArtisans,
@@ -62,12 +62,21 @@ const DashboardAdmin = () => {
         getAdminDemandes(demandesPage, 10)
       ]);
       
-      setArtisans(artisansData.content || []);
-      setArtisansTotal(artisansData.totalElements);
-      setClients(clientsData.content || []);
-      setClientsTotal(clientsData.totalElements);
-      setDemandes(demandesData.content || []);
-      setDemandesTotal(demandesData.totalElements);
+      console.log("📋 Artisans reçus:", artisansData?.content?.length);
+      console.log("📋 Clients reçus:", clientsData?.content?.length);
+      console.log("📋 Demandes reçues:", demandesData?.length);
+      
+      const demandesList = Array.isArray(demandesData) ? demandesData : (demandesData?.content || []);
+      
+      setArtisans(artisansData?.content || []);
+      setArtisansTotal(artisansData?.totalElements || 0);
+      setClients(clientsData?.content || []);
+      setClientsTotal(clientsData?.totalElements || 0);
+      setDemandes(demandesList);
+      setDemandesTotal(demandesList.length);
+      
+      console.log("✅ Demandes chargées:", demandesList.length);
+      
     } catch (err) {
       console.error("Erreur chargement données", err);
     } finally {
@@ -79,12 +88,16 @@ const DashboardAdmin = () => {
     fetchData();
   }, [artisansPage, clientsPage, demandesPage]);
 
-  // Actions Artisans
+  // ========== ACTIONS ARTISANS ==========
   const handleBlockArtisan = async (id: number) => {
     setActionLoading(id);
     try {
       await blockArtisan(id);
       await fetchData();
+      alert("Artisan bloqué avec succès");
+    } catch (err) {
+      console.error(err);
+      alert("Erreur lors du blocage");
     } finally {
       setActionLoading(null);
     }
@@ -95,6 +108,10 @@ const DashboardAdmin = () => {
     try {
       await unblockArtisan(id);
       await fetchData();
+      alert("Artisan débloqué avec succès");
+    } catch (err) {
+      console.error(err);
+      alert("Erreur lors du déblocage");
     } finally {
       setActionLoading(null);
     }
@@ -105,6 +122,10 @@ const DashboardAdmin = () => {
     try {
       await verifyArtisan(id);
       await fetchData();
+      alert("Artisan vérifié avec succès");
+    } catch (err) {
+      console.error(err);
+      alert("Erreur lors de la vérification");
     } finally {
       setActionLoading(null);
     }
@@ -116,18 +137,26 @@ const DashboardAdmin = () => {
       try {
         await deleteArtisan(id);
         await fetchData();
+        alert("Artisan supprimé avec succès");
+      } catch (err) {
+        console.error(err);
+        alert("Erreur lors de la suppression");
       } finally {
         setActionLoading(null);
       }
     }
   };
 
-  // Actions Clients
+  // ========== ACTIONS CLIENTS ==========
   const handleBlockClient = async (id: number) => {
     setActionLoading(id);
     try {
       await blockClient(id);
       await fetchData();
+      alert("Client bloqué avec succès");
+    } catch (err) {
+      console.error(err);
+      alert("Erreur lors du blocage");
     } finally {
       setActionLoading(null);
     }
@@ -138,6 +167,10 @@ const DashboardAdmin = () => {
     try {
       await unblockClient(id);
       await fetchData();
+      alert("Client débloqué avec succès");
+    } catch (err) {
+      console.error(err);
+      alert("Erreur lors du déblocage");
     } finally {
       setActionLoading(null);
     }
@@ -149,18 +182,26 @@ const DashboardAdmin = () => {
       try {
         await deleteClient(id);
         await fetchData();
+        alert("Client supprimé avec succès");
+      } catch (err) {
+        console.error(err);
+        alert("Erreur lors de la suppression");
       } finally {
         setActionLoading(null);
       }
     }
   };
 
-  // Actions Demandes
+  // ========== ACTIONS DEMANDES ==========
   const handleUpdateStatut = async (id: number, statut: string) => {
     setActionLoading(id);
     try {
       await updateDemandeStatut(id, statut as any);
       await fetchData();
+      alert(`Statut modifié en ${statut}`);
+    } catch (err) {
+      console.error(err);
+      alert("Erreur lors de la modification");
     } finally {
       setActionLoading(null);
     }
@@ -172,6 +213,10 @@ const DashboardAdmin = () => {
       try {
         await deleteAdminDemande(id);
         await fetchData();
+        alert("Demande supprimée avec succès");
+      } catch (err) {
+        console.error(err);
+        alert("Erreur lors de la suppression");
       } finally {
         setActionLoading(null);
       }
@@ -183,7 +228,7 @@ const DashboardAdmin = () => {
     navigate("/login");
   };
 
-  // Statistiques
+  // ========== STATISTIQUES ==========
   const stats = {
     totalArtisans: artisansTotal,
     totalClients: clientsTotal,
@@ -193,10 +238,12 @@ const DashboardAdmin = () => {
     artisansVerifies: artisans.filter(a => a.verified).length,
     demandesEnAttente: demandes.filter(d => d.statutDemande === "EN_ATTENTE").length,
     demandesAcceptees: demandes.filter(d => d.statutDemande === "ACCEPTEE").length,
+    demandesEnCours: demandes.filter(d => d.statutDemande === "EN_COURS").length,
     demandesTerminees: demandes.filter(d => d.statutDemande === "TERMINEE").length,
+    demandesRefusees: demandes.filter(d => d.statutDemande === "REFUSEE").length,
   };
 
-  // Filtrage
+  // ========== FILTRAGE ==========
   const filteredArtisans = artisans.filter(a =>
     `${a.nom} ${a.prenom} ${a.email} ${a.metier?.nom || ""} ${a.commune || ""} ${a.localisation || ""}`
       .toLowerCase()
@@ -210,29 +257,32 @@ const DashboardAdmin = () => {
   );
 
   const filteredDemandes = demandes.filter(d =>
-    `${d.descriptionTravail} ${d.clientName} ${d.artisanName || ''}`
+    `${d.descriptionTravail} ${d.clientName || ''} ${d.artisanName || ''} ${d.clientCommune || ''}`
       .toLowerCase()
       .includes(searchTerm.toLowerCase())
   );
 
+  // ========== UTILITAIRES ==========
   const getStatutBadge = (statut: string) => {
-    const config = {
+    const config: Record<string, string> = {
       EN_ATTENTE: "bg-amber-100 text-amber-700",
       ACCEPTEE: "bg-blue-100 text-blue-700",
+      EN_COURS: "bg-purple-100 text-purple-700",
       TERMINEE: "bg-green-100 text-green-700",
       REFUSEE: "bg-red-100 text-red-700",
     };
-    return config[statut as keyof typeof config] || "bg-gray-100 text-gray-700";
+    return config[statut] || "bg-gray-100 text-gray-700";
   };
 
   const getStatutLabel = (statut: string) => {
-    const labels = {
+    const labels: Record<string, string> = {
       EN_ATTENTE: "En attente",
       ACCEPTEE: "Acceptée",
+      EN_COURS: "En cours",
       TERMINEE: "Terminée",
       REFUSEE: "Refusée",
     };
-    return labels[statut as keyof typeof labels] || statut;
+    return labels[statut] || statut;
   };
 
   const formatDate = (dateStr: string) => {
@@ -261,7 +311,7 @@ const DashboardAdmin = () => {
       <Navbar brand="Admin Panel" links={[]} showAuthButtons={false} />
 
       <div className="min-h-screen bg-gray-50">
-        {/* Header */}
+        {/* HEADER */}
         <div className="bg-gradient-to-r from-purple-600 to-purple-800 pt-8 pb-16 px-4">
           <div className="max-w-7xl mx-auto">
             <div className="flex justify-between items-center mb-8">
@@ -277,7 +327,7 @@ const DashboardAdmin = () => {
               </button>
             </div>
 
-            {/* Navigation Tabs */}
+            {/* TABS */}
             <div className="flex gap-2 flex-wrap">
               <TabButton active={activeTab === "overview"} onClick={() => setActiveTab("overview")} icon={TrendingUp} label="Vue d'ensemble" />
               <TabButton active={activeTab === "artisans"} onClick={() => setActiveTab("artisans")} icon={Briefcase} label="Artisans" count={stats.totalArtisans} />
@@ -289,25 +339,52 @@ const DashboardAdmin = () => {
 
         <div className="max-w-7xl mx-auto px-4 -mt-8 pb-12">
           
-          {/* ========== VUE D'ENSEMBLE ========== */}
+          {/* ==================== VUE D'ENSEMBLE ==================== */}
           {activeTab === "overview" && (
             <div className="space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <StatCard title="Artisans" value={stats.totalArtisans} icon={Briefcase} color="purple"
-                  subStats={[
-                    { label: "Actifs", value: stats.artisansActifs },
-                    { label: "Bloqués", value: stats.artisansBloques },
-                    { label: "Vérifiés", value: stats.artisansVerifies },
-                  ]}
-                />
-                <StatCard title="Clients" value={stats.totalClients} icon={Users} color="blue" />
-                <StatCard title="Demandes" value={stats.totalDemandes} icon={ClipboardList} color="green"
-                  subStats={[
-                    { label: "En attente", value: stats.demandesEnAttente },
-                    { label: "Acceptées", value: stats.demandesAcceptees },
-                    { label: "Terminées", value: stats.demandesTerminees },
-                  ]}
-                />
+                {/* Carte Artisans */}
+                <div className="bg-white rounded-2xl shadow-lg p-6">
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="p-3 rounded-xl bg-purple-100">
+                      <Briefcase size={24} className="text-purple-600" />
+                    </div>
+                    <span className="text-3xl font-bold text-gray-800">{stats.totalArtisans}</span>
+                  </div>
+                  <h3 className="text-gray-600 font-medium">Artisans</h3>
+                  <div className="mt-4 pt-4 border-t border-gray-100 flex gap-4 text-sm">
+                    <div><p className="text-gray-400">Actifs</p><p className="font-semibold">{stats.artisansActifs}</p></div>
+                    <div><p className="text-gray-400">Bloqués</p><p className="font-semibold">{stats.artisansBloques}</p></div>
+                    <div><p className="text-gray-400">Vérifiés</p><p className="font-semibold">{stats.artisansVerifies}</p></div>
+                  </div>
+                </div>
+
+                {/* Carte Clients */}
+                <div className="bg-white rounded-2xl shadow-lg p-6">
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="p-3 rounded-xl bg-blue-100">
+                      <Users size={24} className="text-blue-600" />
+                    </div>
+                    <span className="text-3xl font-bold text-gray-800">{stats.totalClients}</span>
+                  </div>
+                  <h3 className="text-gray-600 font-medium">Clients</h3>
+                </div>
+
+                {/* Carte Demandes */}
+                <div className="bg-white rounded-2xl shadow-lg p-6">
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="p-3 rounded-xl bg-green-100">
+                      <ClipboardList size={24} className="text-green-600" />
+                    </div>
+                    <span className="text-3xl font-bold text-gray-800">{stats.totalDemandes}</span>
+                  </div>
+                  <h3 className="text-gray-600 font-medium">Demandes</h3>
+                  <div className="mt-4 pt-4 border-t border-gray-100 flex gap-4 text-sm">
+                    <div><p className="text-gray-400">En attente</p><p className="font-semibold">{stats.demandesEnAttente}</p></div>
+                    <div><p className="text-gray-400">Acceptées</p><p className="font-semibold">{stats.demandesAcceptees}</p></div>
+                    <div><p className="text-gray-400">Terminées</p><p className="font-semibold">{stats.demandesTerminees}</p></div>
+                  </div>
+                </div>
               </div>
 
               {/* Dernières demandes */}
@@ -324,7 +401,7 @@ const DashboardAdmin = () => {
                       onClick={() => navigate(`/admin/demande/${demande.id}`)}>
                       <div className="flex-1">
                         <p className="font-medium">{demande.descriptionTravail}</p>
-                        <p className="text-sm text-gray-500">Client: {demande.clientName}</p>
+                        <p className="text-sm text-gray-500">Client: {demande.clientName || "Inconnu"}</p>
                       </div>
                       <span className={`px-2 py-1 rounded-full text-xs ${getStatutBadge(demande.statutDemande)}`}>
                         {getStatutLabel(demande.statutDemande)}
@@ -337,7 +414,7 @@ const DashboardAdmin = () => {
             </div>
           )}
 
-          {/* ========== GESTION DES ARTISANS ========== */}
+          {/* ==================== GESTION DES ARTISANS ==================== */}
           {activeTab === "artisans" && (
             <div className="bg-white rounded-2xl shadow-lg overflow-hidden">
               <div className="p-6 border-b border-gray-100">
@@ -452,7 +529,7 @@ const DashboardAdmin = () => {
             </div>
           )}
 
-          {/* ========== GESTION DES CLIENTS ========== */}
+          {/* ==================== GESTION DES CLIENTS ==================== */}
           {activeTab === "clients" && (
             <div className="bg-white rounded-2xl shadow-lg overflow-hidden">
               <div className="p-6 border-b border-gray-100">
@@ -550,7 +627,7 @@ const DashboardAdmin = () => {
             </div>
           )}
 
-          {/* ========== GESTION DES DEMANDES ========== */}
+          {/* ==================== GESTION DES DEMANDES ==================== */}
           {activeTab === "demandes" && (
             <div className="bg-white rounded-2xl shadow-lg overflow-hidden">
               <div className="p-6 border-b border-gray-100">
@@ -572,6 +649,7 @@ const DashboardAdmin = () => {
                       <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">ID</th>
                       <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Description</th>
                       <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Client</th>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Commune</th>
                       <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Artisan</th>
                       <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Statut</th>
                       <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Date</th>
@@ -583,19 +661,24 @@ const DashboardAdmin = () => {
                       <tr key={demande.id} className="hover:bg-gray-50">
                         <td className="px-4 py-3 text-sm">#{demande.id}</td>
                         <td className="px-4 py-3 text-sm max-w-xs truncate">{demande.descriptionTravail}</td>
-                        <td className="px-4 py-3 text-sm">{demande.clientName}</td>
+                        <td className="px-4 py-3 text-sm">{demande.clientName || "Inconnu"}</td>
+                        <td className="px-4 py-3 text-sm">{demande.clientCommune || "-"}</td>
                         <td className="px-4 py-3 text-sm">{demande.artisanName || "Non assigné"}</td>
                         <td className="px-4 py-3">
-                          <select value={demande.statutDemande} onChange={(e) => handleUpdateStatut(demande.id, e.target.value)}
+                          <select
+                            value={demande.statutDemande}
+                            onChange={(e) => handleUpdateStatut(demande.id, e.target.value)}
                             disabled={actionLoading === demande.id}
-                            className={`px-2 py-1 rounded-full text-xs font-medium border ${getStatutBadge(demande.statutDemande)}`}>
+                            className={`px-2 py-1 rounded-lg text-xs border ${getStatutBadge(demande.statutDemande)}`}
+                          >
                             <option value="EN_ATTENTE">En attente</option>
                             <option value="ACCEPTEE">Acceptée</option>
+                            <option value="EN_COURS">En cours</option>
                             <option value="TERMINEE">Terminée</option>
                             <option value="REFUSEE">Refusée</option>
                           </select>
                         </td>
-                        <td className="px-4 py-3 text-sm">{formatDate(demande.createdAt)}</td>
+                        <td className="px-4 py-3 text-sm">{formatDate(demande.createdAt || demande.dateRendezVous)}</td>
                         <td className="px-4 py-3">
                           <div className="flex gap-2">
                             <button onClick={() => navigate(`/admin/demande/${demande.id}`)} className="p-1 text-blue-500 hover:bg-blue-50 rounded" title="Voir">
@@ -634,7 +717,8 @@ const DashboardAdmin = () => {
   );
 };
 
-// Composants auxiliaires
+// ==================== COMPOSANTS AUXILIAIRES ====================
+
 const TabButton = ({ active, onClick, icon: Icon, label, count }: any) => (
   <button onClick={onClick} className={`flex items-center gap-2 px-5 py-2.5 rounded-xl font-medium transition-all duration-200 ${
     active ? "bg-white text-purple-700 shadow-md" : "bg-white/10 text-white hover:bg-white/20"
@@ -643,23 +727,6 @@ const TabButton = ({ active, onClick, icon: Icon, label, count }: any) => (
     {label}
     {count !== undefined && <span className={`text-xs px-2 py-0.5 rounded-full ${active ? "bg-purple-100 text-purple-700" : "bg-white/20 text-white"}`}>{count}</span>}
   </button>
-);
-
-const StatCard = ({ title, value, icon: Icon, color, subStats }: any) => (
-  <div className="bg-white rounded-2xl shadow-lg p-6">
-    <div className="flex items-center justify-between mb-4">
-      <div className={`p-3 rounded-xl bg-${color}-100`}><Icon size={24} className={`text-${color}-600`} /></div>
-      <span className="text-3xl font-bold text-gray-800">{value}</span>
-    </div>
-    <h3 className="text-gray-600 font-medium">{title}</h3>
-    {subStats && (
-      <div className="mt-4 pt-4 border-t border-gray-100 flex gap-4 text-sm">
-        {subStats.map((stat: any, index: number) => (
-          <div key={index}><p className="text-gray-400">{stat.label}</p><p className="font-semibold">{stat.value}</p></div>
-        ))}
-      </div>
-    )}
-  </div>
 );
 
 export default DashboardAdmin;

@@ -1,106 +1,41 @@
-// src/api/demande.api.ts
-
 import api from "./axios";
-import type { 
-  CreateDemandeData, 
-  DemandeResponse, 
-  DemandesResponse, 
-  DemandeClientResponse, 
-  DemandeArtisanResponse 
-} from "../types/demande";
+import type { CreateDemandeData, DemandeResponse, DemandeClientResponse, DemandeArtisanResponse } from "../types/demande";
 
-// ✅ Créer une nouvelle demande AVEC photo (multipart/form-data)
-export const createDemandeWithPhoto = async (
-  demandeData: CreateDemandeData,
-  photoFile?: File
-): Promise<DemandeResponse> => {
+// ========== CRÉATION ==========
+export const createDemandeWithPhoto = async (demandeData: CreateDemandeData, photoFile?: File): Promise<DemandeResponse> => {
   const formData = new FormData();
-  
-  // Créer un Blob JSON pour la partie "demande"
-  const demandeBlob = new Blob([JSON.stringify(demandeData)], {
-    type: "application/json"
-  });
+  const demandeBlob = new Blob([JSON.stringify(demandeData)], { type: "application/json" });
   formData.append("demande", demandeBlob);
-  
-  // Ajouter la photo si elle existe (le backend attend "photo_endommage" ou "photo"?)
-  if (photoFile) {
-    formData.append("photo_endommage", photoFile);
-  }
-  
-  const response = await api.post("/demandes", formData, {
-    headers: {
-      "Content-Type": "multipart/form-data",
-    },
-  });
-  
+  if (photoFile) formData.append("photo_endommage", photoFile);
+  const response = await api.post("/demandes", formData, { headers: { "Content-Type": "multipart/form-data" } });
   return response.data;
 };
 
-// src/api/demande.api.ts
+export const createDemande = (data: CreateDemandeData): Promise<DemandeResponse> => api.post("/demandes", data).then(res => res.data);
 
-// ✅ Récupérer les demandes disponibles pour un artisan (même commune)
-export const getDemandesDisponiblesByArtisanId = (artisanId: number): Promise<DemandeArtisanResponse[]> => {
-  return api.get(`/demandes/disponibles/artisan/${artisanId}`).then(res => res.data);
+// ========== LECTURE ==========
+export const getDemandeById = (id: number): Promise<DemandeResponse> => api.get(`/demandes/${id}`).then(res => res.data);
+export const getDemandesByClientId = (clientId: number): Promise<DemandeClientResponse[]> => api.get(`/demandes/client/${clientId}`).then(res => res.data);
+export const getDemandesDisponiblesByArtisanId = (artisanId: number): Promise<DemandeArtisanResponse[]> => api.get(`/demandes/disponibles/artisan/${artisanId}`).then(res => res.data);
+export const getDemandesByArtisanId = (artisanId: number): Promise<DemandeArtisanResponse[]> => api.get(`/demandes/artisan/${artisanId}`).then(res => res.data);
+export const getDemandeDescription = (id: number): Promise<{ description: string }> => api.get(`/demands/${id}/description`).then(res => res.data);
+export const getDemandeDateRendezVous = (id: number): Promise<{ date: string }> => api.get(`/demandes/${id}/date-rendezvous`).then(res => res.data);
+export const getDemandeStatut = (id: number): Promise<{ statut: string }> => api.get(`/demandes/${id}/statut`).then(res => res.data);
+export const getDemandeHeure = (id: number): Promise<{ heure: string }> => api.get(`/demandes/${id}/heure`).then(res => res.data);
+export const getDemandePhotos = (id: number): Promise<string[]> => api.get(`/demandes/${id}/photo`).then(res => res.data);
+
+// ========== ACTIONS ARTISAN ==========
+export const accepterDemande = (demandeId: number, artisanId: number): Promise<DemandeResponse> => api.post(`/demandes/${demandeId}/accepter/${artisanId}`).then(res => res.data);
+export const updateDemandeStatutArtisan = (demandeId: number, statut: "EN_COURS" | "TERMINEE"): Promise<DemandeResponse> => api.put(`/demandes/${demandeId}/statut`, `"${statut}"`, { headers: { "Content-Type": "application/json" } }).then(res => res.data);
+
+// ========== ADMIN ==========
+export const getAdminDemandes = async (page = 0, size = 10): Promise<DemandeResponse[]> => {
+  const res = await api.get(`/admin/demandes?page=${page}&size=${size}`);
+  return Array.isArray(res.data) ? res.data : (res.data?.content || []);
 };
-
-// ⚠️ Créer une demande SANS photo (JSON simple)
-export const createDemande = (data: CreateDemandeData): Promise<DemandeResponse> => {
-  return api.post("/demandes", data).then(res => res.data);
-};
-
-// Récupérer les détails d'une demande par ID
-export const getDemandeById = (id: number): Promise<DemandeResponse> => {
-  return api.get(`/demandes/${id}`).then(res => res.data);
-};
-
-// Récupérer toutes les demandes d'un client
-export const getDemandesByClientId = (clientId: number): Promise<DemandeClientResponse[]> => {
-  return api.get(`/demandes/client/${clientId}`).then(res => res.data);
-};
-
-// Récupérer toutes les demandes d'un artisan
-export const getDemandesByArtisanId = (artisanId: number): Promise<DemandeArtisanResponse[]> => {
-  return api.get(`/demandes/artisan/${artisanId}`).then(res => res.data);
-};
-
-// Récupérer la description d'une demande
-export const getDemandeDescription = (id: number): Promise<{ description: string }> => {
-  return api.get(`/demands/${id}/description`).then(res => res.data);
-};
-
-// Récupérer la date de rendez-vous d'une demande
-export const getDemandeDateRendezVous = (id: number): Promise<{ date: string }> => {
-  return api.get(`/demandes/${id}/date-rendezvous`).then(res => res.data);
-};
-
-// Récupérer le statut d'une demande
-export const getDemandeStatut = (id: number): Promise<{ statut: string }> => {
-  return api.get(`/demandes/${id}/statut`).then(res => res.data);
-};
-
-// Récupérer l'heure d'une demande (si le backend le supporte)
-export const getDemandeHeure = (id: number): Promise<{ heure: string }> => {
-  return api.get(`/demandes/${id}/heure`).then(res => res.data);
-};
-
-// Récupérer les photos d'une demande
-export const getDemandePhotos = (id: number): Promise<string[]> => {
-  return api.get(`/demandes/${id}/photo`).then(res => res.data);
-};
-
-// Ajouter une photo à une demande existante
+export const deleteAdminDemande = (id: number): Promise<{ message: string }> => api.delete(`/admin/demandes/${id}`).then(res => res.data);
 export const addDemandePhoto = (id: number, file: File): Promise<{ message: string; photoUrl?: string }> => {
   const formData = new FormData();
   formData.append("file", file);
-  
-  return api.post(`/demandes/${id}/photo`, formData, {
-    headers: {
-      "Content-Type": "multipart/form-data",
-    },
-  }).then(res => res.data);
-};
-
-// Récupérer toutes les demandes (admin)
-export const getAdminDemandes = (page = 0, size = 10): Promise<DemandesResponse> => {
-  return api.get(`/admin/demandes?page=${page}&size=${size}`).then(res => res.data);
+  return api.post(`/demandes/${id}/photo`, formData, { headers: { "Content-Type": "multipart/form-data" } }).then(res => res.data);
 };

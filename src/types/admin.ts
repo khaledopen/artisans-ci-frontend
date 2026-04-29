@@ -1,29 +1,18 @@
-// src/types/admin.ts
-
-// ========== Types généraux ==========
-
-export type StatutDemande = "EN_ATTENTE" | "ACCEPTEE" | "REFUSEE" | "TERMINEE";
-
-// ========== Demandes ==========
-
-export interface UpdateDemandeStatutData {
-  statut: StatutDemande;
-}
+export type StatutDemande = "EN_ATTENTE" | "ACCEPTEE" | "EN_COURS" | "TERMINEE" | "REFUSEE";
 
 export interface AdminDemande {
   id: number;
   dateRendezVous: string;
   descriptionTravail: string;
   statutDemande: StatutDemande;
-  heure: string;
+  heure: string | null;
   clientId: number;
   clientName: string;
-  artisanId?: number;
-  artisanName?: string;
-  createdAt: string;
+  clientCommune?: string;
+  artisanId?: number | null;
+  artisanName?: string | null;
+  createdAt?: string;
 }
-
-// ========== Clients ==========
 
 export interface AdminClient {
   id: number;
@@ -37,8 +26,6 @@ export interface AdminClient {
   createdAt: string;
 }
 
-// ========== Artisans ==========
-
 export interface AdminArtisan {
   id: number;
   nom: string;
@@ -47,16 +34,11 @@ export interface AdminArtisan {
   localisation: string;
   commune: string;
   photoprofil?: string;
-  metier: {
-    id: number;
-    nom: string;
-  };
+  metier: { id: number; nom: string };
   verified: boolean;
   blocked: boolean;
   createdAt: string;
 }
-
-// ========== Réponses paginées ==========
 
 export interface PaginatedResponse<T> {
   content: T[];
@@ -71,4 +53,3 @@ export interface PaginatedResponse<T> {
 
 export type AdminArtisansResponse = PaginatedResponse<AdminArtisan>;
 export type AdminClientsResponse = PaginatedResponse<AdminClient>;
-export type AdminDemandesResponse = PaginatedResponse<AdminDemande>;

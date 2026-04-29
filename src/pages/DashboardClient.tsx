@@ -15,7 +15,6 @@ import {
   LogOut,
   Wrench,
   Star,
-  User,
 } from "lucide-react";
 import { getMe } from "../api/auth.api";
 import { getDemandesByClientId } from "../api/demande.api";
@@ -34,13 +33,13 @@ const DashboardClient = () => {
   const [demandes, setDemandes] = useState<DemandeClientResponse[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeFilter, setActiveFilter] = useState<string>("TOUTES");
+  const [error, setError] = useState<string>("");
 
   // Récupérer l'utilisateur connecté
   useEffect(() => {
     const fetchUser = async () => {
       try {
         const data = await getMe();
-        // Récupérer la commune depuis localStorage si absente
         const storedUser = JSON.parse(localStorage.getItem("user") || "{}");
         if (!data.commune && storedUser.commune) {
           data.commune = storedUser.commune;
@@ -69,14 +68,44 @@ const DashboardClient = () => {
         
         if (!clientId) {
           console.error("ID client non trouvé");
+          setError("Impossible de récupérer votre ID");
           setLoading(false);
           return;
         }
         
+        console.log("🆔 Appel API pour client ID:", clientId);
         const data = await getDemandesByClientId(clientId);
-        setDemandes(Array.isArray(data) ? data : []);
-      } catch (err) {
-        console.error("Erreur chargement demandes", err);
+        console.log("📋 Réponse brute de l'API:", data);
+        
+        // Vérifier le format des données
+        let demandesList = [];
+        if (Array.isArray(data)) {
+          demandesList = data;
+        } else if (data?.content && Array.isArray(data.content)) {
+          demandesList = data.content;
+        } else if (data?.data && Array.isArray(data.data)) {
+          demandesList = data.data;
+        } else {
+          console.warn("⚠️ Format de réponse inattendu:", data);
+          demandesList = [];
+        }
+        
+        // Afficher chaque demande avec son statut
+        demandesList.forEach((d: any) => {
+          const statut = d.statutDemande || d.statut_demande || d.statut;
+          console.log(`📌 Demande #${d.id}: statut = "${statut}", description = "${d.descriptionTravail || d.description_travail}"`);
+        });
+        
+        setDemandes(demandesList);
+        
+        if (demandesList.length === 0) {
+          console.log("ℹ️ Aucune demande trouvée pour ce client");
+        }
+      } catch (err: any) {
+        console.error("❌ Erreur chargement demandes:", err);
+        console.error("Status:", err.response?.status);
+        console.error("Message:", err.response?.data);
+        setError("Erreur lors du chargement des demandes");
       } finally {
         setLoading(false);
       }
@@ -90,21 +119,26 @@ const DashboardClient = () => {
     navigate("/login");
   };
 
+  // Fonction pour récupérer le statut (quel que soit le nom du champ)
+  const getStatut = (demande: any) => {
+    return demande.statutDemande || demande.statut_demande || demande.statut || "EN_ATTENTE";
+  };
+
   const stats = {
     total: demandes.length,
-    enAttente: demandes.filter((d) => d.statutDemande === "EN_ATTENTE").length,
-    acceptees: demandes.filter((d) => d.statutDemande === "ACCEPTEE").length,
-    terminees: demandes.filter((d) => d.statutDemande === "TERMINEE").length,
+    enAttente: demandes.filter((d) => getStatut(d) === "EN_ATTENTE").length,
+    acceptees: demandes.filter((d) => getStatut(d) === "ACCEPTEE").length,
+    terminees: demandes.filter((d) => getStatut(d) === "TERMINEE").length,
+    refusees: demandes.filter((d) => getStatut(d) === "REFUSEE").length,
   };
 
   const demandesFiltrees =
     activeFilter === "TOUTES"
       ? demandes
-      : demandes.filter((d) => d.statutDemande === activeFilter);
+      : demandes.filter((d) => getStatut(d) === activeFilter);
 
   const initiales = user ? `${user.prenom?.charAt(0) || ""}${user.nom?.charAt(0) || ""}` : "?";
 
-  // Afficher la localisation complète (commune + ville)
   const getLocalisation = () => {
     if (user?.commune && user?.localisation) {
       return `${user.commune}, ${user.localisation}`;
@@ -116,6 +150,12 @@ const DashboardClient = () => {
       return user.localisation;
     }
     return "Abidjan";
+  };
+
+  // Obtenir la config du statut
+  const getStatutConfig = (demande: any) => {
+    const statut = getStatut(demande);
+    return statutConfig[statut] || statutConfig.EN_ATTENTE;
   };
 
   return (
@@ -130,7 +170,7 @@ const DashboardClient = () => {
       />
 
       <div className="min-h-screen bg-gray-50">
-        {/* Header avec dégradé */}
+        {/* Header */}
         <div className="bg-gradient-to-r from-blue-600 to-blue-800 pt-10 pb-20 px-4">
           <div className="max-w-6xl mx-auto">
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-10">
@@ -195,6 +235,13 @@ const DashboardClient = () => {
               </button>
             </div>
 
+            {/* Message d'erreur */}
+            {error && (
+              <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-xl text-red-600 text-sm">
+                {error}
+              </div>
+            )}
+
             {/* Filtres */}
             <div className="flex flex-wrap gap-2 mb-6">
               {["TOUTES", "EN_ATTENTE", "ACCEPTEE", "TERMINEE", "REFUSEE"].map((f) => (
@@ -239,9 +286,9 @@ const DashboardClient = () => {
             ) : (
               <div className="space-y-4">
                 {demandesFiltrees.map((demande) => {
-                  const config = statutConfig[demande.statutDemande] || statutConfig.EN_ATTENTE;
+                  const config = getStatutConfig(demande);
                   const Icon = config.icon;
-                  const peutCommenter = demande.statutDemande === "TERMINEE" && !demande.commentaireId;
+                  const peutCommenter = getStatut(demande) === "TERMINEE" && !(demande as any).commentaireId;
                   
                   return (
                     <div
@@ -260,17 +307,17 @@ const DashboardClient = () => {
                               <Calendar size={12} />
                               {new Date(demande.dateRendezVous).toLocaleDateString("fr-FR")}
                             </span>
-                            {demande.commentaireId && (
+                            {(demande as any).commentaireId && (
                               <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full flex items-center gap-1">
                                 <Star size={10} /> Avis laissé
                               </span>
                             )}
                           </div>
                           <p className="font-semibold text-gray-800">{demande.descriptionTravail}</p>
-                          {demande.artisanName && (
+                          {(demande as any).artisanName && (
                             <p className="text-sm text-gray-500 mt-1 flex items-center gap-1">
                               <Wrench size={14} />
-                              Artisan: {demande.artisanName}
+                              Artisan: {(demande as any).artisanName}
                             </p>
                           )}
                         </div>
@@ -280,7 +327,7 @@ const DashboardClient = () => {
                               onClick={(e) => {
                                 e.stopPropagation();
                                 navigate(`/laisser-avis/${demande.id}`, { 
-                                  state: { artisanId: demande.artisanId, artisanName: demande.artisanName }
+                                  state: { artisanId: (demande as any).artisanId, artisanName: (demande as any).artisanName }
                                 });
                               }}
                               className="flex items-center gap-1 px-3 py-1.5 bg-yellow-500 text-white rounded-lg text-sm hover:bg-yellow-600 transition"

@@ -14,16 +14,13 @@ const Register = () => {
   const [success, setSuccess] = useState("");
 
   const [form, setForm] = useState({
-    // Champs communs
     nom: "",
     prenom: "",
     email: "",
     motpasse: "",
     confirmPassword: "",
     localisation: "Abidjan",
-    commune: "",  // ← Commune pour client aussi
-    
-    // Champs artisan uniquement
+    commune: "",
     metierId: 1,
   });
 
@@ -73,7 +70,7 @@ const Register = () => {
           email: form.email,
           motpasse: form.motpasse,
           localisation: form.localisation,
-          commune: form.commune,  // ← AJOUTÉ
+          commune: form.commune,
         });
       } else {
         response = await registerArtisan({
@@ -121,8 +118,6 @@ const Register = () => {
 
       <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center px-4 py-12">
         <div className="w-full max-w-md bg-white rounded-2xl shadow-xl overflow-hidden">
-
-          {/* Header */}
           <div className="bg-gradient-to-r from-blue-600 to-blue-700 px-6 py-8 text-center">
             <div className="w-16 h-16 bg-white/20 rounded-2xl flex items-center justify-center mx-auto mb-3">
               <span className="text-white text-2xl font-bold">A</span>
@@ -131,9 +126,7 @@ const Register = () => {
             <p className="text-blue-100 text-sm mt-1">Rejoignez la communauté ArtisanCI</p>
           </div>
 
-          {/* Body */}
           <div className="p-6">
-
             {error && (
               <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-xl flex items-center gap-2 text-red-600 text-sm">
                 <AlertCircle size={16} />
@@ -208,7 +201,7 @@ const Register = () => {
                 className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-blue-400 focus:ring-2 focus:ring-blue-200 outline-none transition"
               />
 
-              {/* LOCALISATION ET COMMUNE - pour les deux rôles */}
+              {/* Localisation et commune */}
               <div className="grid grid-cols-2 gap-3">
                 <div className="relative">
                   <MapPin size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
@@ -217,7 +210,7 @@ const Register = () => {
                     placeholder="Ville"
                     value={form.localisation}
                     onChange={(e) => setForm({ ...form, localisation: e.target.value })}
-                    className="w-full pl-10 pr-4 py-3 rounded-xl border border-gray-200 focus:border-blue-400 focus:ring-2 focus:ring-blue-200 outline-none transition"
+                    className="w-full pl-10 pr-4 py-3 rounded-xl border border-gray-200 focus:border-blue-400 outline-none transition"
                     required
                   />
                 </div>
@@ -228,7 +221,7 @@ const Register = () => {
                     placeholder="Commune (ex: Cocody, Plateau...)"
                     value={form.commune}
                     onChange={(e) => setForm({ ...form, commune: e.target.value })}
-                    className="w-full pl-10 pr-4 py-3 rounded-xl border border-gray-200 focus:border-blue-400 focus:ring-2 focus:ring-blue-200 outline-none transition"
+                    className="w-full pl-10 pr-4 py-3 rounded-xl border border-gray-200 focus:border-blue-400 outline-none transition"
                     required
                   />
                 </div>
@@ -239,7 +232,7 @@ const Register = () => {
                 <select
                   value={form.metierId}
                   onChange={(e) => setForm({ ...form, metierId: Number(e.target.value) })}
-                  className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-blue-400 focus:ring-2 focus:ring-blue-200 outline-none transition bg-white"
+                  className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-blue-400 outline-none transition bg-white"
                 >
                   <option value={1}>Plomberie</option>
                   <option value={2}>Électricité</option>
@@ -255,7 +248,7 @@ const Register = () => {
                 placeholder="Mot de passe"
                 value={form.motpasse}
                 onChange={(e) => setForm({ ...form, motpasse: e.target.value })}
-                className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-blue-400 focus:ring-2 focus:ring-blue-200 outline-none transition"
+                className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-blue-400 outline-none transition"
               />
 
               <input
@@ -263,7 +256,7 @@ const Register = () => {
                 placeholder="Confirmer le mot de passe"
                 value={form.confirmPassword}
                 onChange={(e) => setForm({ ...form, confirmPassword: e.target.value })}
-                className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-blue-400 focus:ring-2 focus:ring-blue-200 outline-none transition"
+                className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-blue-400 outline-none transition"
               />
 
               <button
