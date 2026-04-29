@@ -14,7 +14,7 @@ export const login = (data: LoginData): Promise<AuthResponse> => {
   return api.post("/auth/login", data).then(res => res.data);
 };
 
-// Inscription client
+// Inscription client (avec commune)
 export const registerClient = (data: RegisterClientData): Promise<AuthResponse> => {
   return api.post("/auth/register/client", data).then(res => res.data);
 };

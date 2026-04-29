@@ -1,5 +1,3 @@
-// src/pages/Register.tsx
-
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Navbar from "../components/Navbar";
@@ -22,8 +20,8 @@ const Register = () => {
     email: "",
     motpasse: "",
     confirmPassword: "",
-    localisation: "Abidjan", // Ville par défaut
-    commune: "Cocody",       // Commune par défaut
+    localisation: "Abidjan",
+    commune: "",  // ← Commune pour client aussi
     
     // Champs artisan uniquement
     metierId: 1,
@@ -40,6 +38,16 @@ const Register = () => {
 
     if (!form.nom || !form.prenom || !form.email || !form.motpasse) {
       setError("Tous les champs sont obligatoires");
+      return;
+    }
+
+    if (role === "CLIENT" && !form.commune) {
+      setError("Veuillez renseigner votre commune");
+      return;
+    }
+
+    if (role === "ARTISAN" && !form.commune) {
+      setError("Veuillez renseigner votre commune");
       return;
     }
 
@@ -65,6 +73,7 @@ const Register = () => {
           email: form.email,
           motpasse: form.motpasse,
           localisation: form.localisation,
+          commune: form.commune,  // ← AJOUTÉ
         });
       } else {
         response = await registerArtisan({
@@ -72,8 +81,8 @@ const Register = () => {
           prenom: form.prenom,
           email: form.email,
           motpasse: form.motpasse,
-          localisation: form.localisation,  // Ville
-          commune: form.commune,            // Commune
+          localisation: form.localisation,
+          commune: form.commune,
           metierId: form.metierId,
         });
       }
@@ -93,6 +102,7 @@ const Register = () => {
       }, 1500);
 
     } catch (err: any) {
+      console.error("Erreur inscription:", err);
       setError(err.response?.data?.message || "Erreur lors de l'inscription");
     } finally {
       setLoading(false);
@@ -208,16 +218,18 @@ const Register = () => {
                     value={form.localisation}
                     onChange={(e) => setForm({ ...form, localisation: e.target.value })}
                     className="w-full pl-10 pr-4 py-3 rounded-xl border border-gray-200 focus:border-blue-400 focus:ring-2 focus:ring-blue-200 outline-none transition"
+                    required
                   />
                 </div>
                 <div className="relative">
                   <MapPin size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
                   <input
                     type="text"
-                    placeholder="Commune"
+                    placeholder="Commune (ex: Cocody, Plateau...)"
                     value={form.commune}
                     onChange={(e) => setForm({ ...form, commune: e.target.value })}
                     className="w-full pl-10 pr-4 py-3 rounded-xl border border-gray-200 focus:border-blue-400 focus:ring-2 focus:ring-blue-200 outline-none transition"
+                    required
                   />
                 </div>
               </div>

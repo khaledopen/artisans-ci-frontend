@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Loader2, AlertCircle, CheckCircle } from "lucide-react";
+import { Loader2, AlertCircle, CheckCircle, Eye, EyeOff } from "lucide-react";
 import { login } from "../api/auth.api";
 
 const Login = () => {
@@ -11,6 +11,7 @@ const Login = () => {
     motpasse: "",
   });
 
+  const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
@@ -95,6 +96,7 @@ const Login = () => {
 
           {/* Formulaire */}
           <form className="space-y-4" onSubmit={(e) => e.preventDefault()}>
+            {/* Champ Email */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Email
@@ -109,25 +111,37 @@ const Login = () => {
               />
             </div>
 
+            {/* Champ Mot de passe avec toggle */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Mot de passe
               </label>
-              <input
-                type="password"
-                placeholder="••••••••"
-                value={form.motpasse}
-                onChange={(e) => setForm({ ...form, motpasse: e.target.value })}
-                className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-blue-400 focus:ring-2 focus:ring-blue-200 outline-none transition"
-                disabled={loading}
-              />
+              <div className="relative">
+                <input
+                  type={showPassword ? "text" : "password"}
+                  placeholder="••••••••"
+                  value={form.motpasse}
+                  onChange={(e) => setForm({ ...form, motpasse: e.target.value })}
+                  className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-blue-400 focus:ring-2 focus:ring-blue-200 outline-none transition pr-12"
+                  disabled={loading}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition"
+                  disabled={loading}
+                >
+                  {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                </button>
+              </div>
             </div>
 
+            {/* Bouton de connexion */}
             <button
               type="button"
               onClick={handleSubmit}
               disabled={loading}
-              className="w-full bg-gradient-to-r from-blue-600 to-blue-700 text-white py-3 rounded-xl font-semibold hover:from-blue-700 hover:to-blue-800 transition-all duration-200 shadow-md hover:shadow-lg disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+              className="w-full bg-gradient-to-r from-blue-600 to-blue-700 text-white py-3 rounded-xl font-semibold hover:from-blue-700 hover:to-blue-800 transition-all duration-200 shadow-md hover:shadow-lg disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center gap-2 mt-2"
             >
               {loading ? (
                 <>

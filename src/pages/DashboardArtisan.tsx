@@ -45,6 +45,13 @@ const DashboardArtisan = () => {
     const fetchUser = async () => {
       try {
         const data = await getMe();
+        
+        // 🔥 Récupérer la commune depuis localStorage si absente de l'API
+        const storedUser = JSON.parse(localStorage.getItem("user") || "{}");
+        if (!data.commune && storedUser.commune) {
+          data.commune = storedUser.commune;
+        }
+        
         setUser(data);
         console.log("👨‍🔧 Artisan connecté:", data);
         console.log("📍 Commune de l'artisan:", data.commune);
@@ -74,7 +81,6 @@ const DashboardArtisan = () => {
       }
       
       console.log("📡 Chargement des demandes disponibles pour artisan ID:", artisanId);
-      // ✅ Utilisation de la nouvelle route
       const data = await getDemandesDisponiblesByArtisanId(artisanId);
       console.log("📋 Demandes disponibles reçues:", data);
       
@@ -151,6 +157,20 @@ const DashboardArtisan = () => {
     return "Non spécifiée";
   };
 
+  // Afficher la localisation correctement
+  const getLocalisation = () => {
+    if (user?.commune && user?.localisation) {
+      return `${user.commune}, ${user.localisation}`;
+    }
+    if (user?.commune) {
+      return user.commune;
+    }
+    if (user?.localisation) {
+      return user.localisation;
+    }
+    return "Abidjan";
+  };
+
   return (
     <>
       <Navbar
@@ -184,7 +204,7 @@ const DashboardArtisan = () => {
                     <Briefcase size={14} /> {user?.metier?.nom || "Artisan"}
                   </p>
                   <p className="text-blue-200 text-xs flex items-center gap-1 mt-0.5">
-                    <MapPin size={12} /> {user?.commune || "Commune non définie"} • {user?.localisation || "Abidjan"}
+                    <MapPin size={12} /> {getLocalisation()}
                   </p>
                 </div>
               </div>
@@ -319,7 +339,7 @@ const DashboardArtisan = () => {
                             </span>
                             <span className="flex items-center gap-1">
                               <MapPin size={14} />
-                              Localisation: {demande.localisation || user?.commune}
+                              Localisation: {demande.localisation || user?.commune || "Abidjan"}
                             </span>
                           </div>
                         </div>

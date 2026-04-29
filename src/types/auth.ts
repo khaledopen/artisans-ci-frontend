@@ -10,7 +10,8 @@ export interface RegisterClientData {
   prenom: string;
   email: string;
   motpasse: string;
-  localisation: string;  // ← AJOUTÉ
+  localisation: string;
+  commune: string;  // ← AJOUTÉ
 }
 
 export interface RegisterArtisanData {
@@ -18,8 +19,8 @@ export interface RegisterArtisanData {
   prenom: string;
   email: string;
   motpasse: string;
-  localisation: string;  // ← Ville
-  commune: string;       // ← Commune
+  localisation: string;
+  commune: string;
   metierId: number;
 }
 
@@ -32,8 +33,8 @@ export interface AuthResponse {
     prenom: string;
     email: string;
     role: string;
-    localisation?: string;  // ← AJOUTÉ
-    commune?: string;       // ← AJOUTÉ
+    localisation?: string;
+    commune?: string;
     photoprofil?: string;
   };
 }

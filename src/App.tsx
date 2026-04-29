@@ -6,6 +6,7 @@ import Register from "./pages/Register";
 import ArtisanProfile from "./pages/ArtisanProfile";
 import DashboardClient from "./pages/DashboardClient";
 import DashboardArtisan from "./pages/DashboardArtisan";
+import DashboardAdmin from "./pages/DashboardAdmin";
 import ProfileArtisan from "./pages/ProfileArtisan";
 import CreerDemande from "./pages/CreerDemande";
 import DemandeDetail from "./pages/DemandeDetail";
@@ -54,6 +55,16 @@ function App() {
         element={
           <ProtectedRoute role="ARTISAN">
             <DashboardArtisan />
+          </ProtectedRoute>
+        }
+      />
+
+      {/* ========== DASHBOARD ADMIN (PROTÉGÉ) ========== */}
+      <Route
+        path="/dashboard-admin"
+        element={
+          <ProtectedRoute role="ADMIN">
+            <DashboardAdmin />
           </ProtectedRoute>
         }
       />
