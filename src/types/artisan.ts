@@ -7,6 +7,7 @@ export interface Artisan {
   email: string;
   localisation: string;
   commune: string;
+  numero?: string;
   photoprofil?: string;
   metier: {
     id: number;
@@ -20,17 +21,11 @@ export interface Artisan {
   pricePerHour?: number;
 }
 
-// Pour le filtre
-export interface FilterArtisansData {
-  metierId?: number | string;
-  commune?: string;
-}
-
 export interface ArtisansResponse {
+  content: Artisan[];
   totalPages: number;
   totalElements: number;
   size: number;
-  content: Artisan[];
   number: number;
   first: boolean;
   last: boolean;
@@ -52,16 +47,19 @@ export interface ArtisansResponse {
   };
 }
 
+// ✅ L'ID est obligatoire car le backend le lit dans le body
 export interface UpdateArtisanProfileData {
   id: number;
-  nom: string;
-  prenom: string;
-  email: string;
-  localisation: string;
+  nom?: string;
+  prenom?: string;
+  localisation?: string;
+  commune?: string;
+  numero?: string;
   photoprofil?: string;
-  commune: string;
-  metier: {
-    id: number;
-    nom: string;
-  };
+  metierId?: number;
+}
+
+export interface FilterArtisansData {
+  metierId?: number | string;
+  commune?: string;
 }

@@ -47,6 +47,7 @@ const DashboardArtisan = () => {
         const storedUser = JSON.parse(localStorage.getItem("user") || "{}");
         const commune = data.commune || storedUser.commune || "Cocody";
         setUser({ ...data, commune });
+        console.log("👨‍🔧 Artisan connecté:", { ...data, commune });
       } catch {
         navigate("/login");
       }
@@ -67,7 +68,9 @@ const DashboardArtisan = () => {
         setLoading(false);
         return;
       }
+      console.log("📡 Appel API: /demandes/artisan/" + artisanId);
       const data = await getDemandesByArtisanId(artisanId);
+      console.log("📋 Demandes reçues:", data);
       setDemandes(Array.isArray(data) ? data : []);
     } catch (err) {
       console.error("Erreur chargement demandes", err);
@@ -80,29 +83,41 @@ const DashboardArtisan = () => {
     fetchDemandes();
   }, []);
 
+  // ✅ ACCEPTER UNE DEMANDE
   const handleAccepter = async (demandeId: number, e: React.MouseEvent) => {
     e.stopPropagation();
     setActionLoading(demandeId);
+    
     try {
       const storedUser = localStorage.getItem("user");
       const userData = JSON.parse(storedUser || "{}");
       const artisanId = userData.id;
-      await accepterDemande(demandeId, artisanId);
+      
+      console.log(`🔍 Acceptation: demande=${demandeId}, artisan=${artisanId}`);
+      
+      const response = await accepterDemande(demandeId, artisanId);
+      console.log("✅ Demande acceptée:", response);
+      
+      // Rafraîchir la liste
       await fetchDemandes();
       alert("✅ Demande acceptée avec succès !");
+      
     } catch (err: any) {
-      console.error("Erreur:", err);
+      console.error("❌ Erreur:", err);
       alert(err.response?.data?.message || "Erreur lors de l'acceptation");
     } finally {
       setActionLoading(null);
     }
   };
 
+  // ✅ METTRE À JOUR LE STATUT
   const handleUpdateStatut = async (demandeId: number, nouveauStatut: string, e: React.MouseEvent) => {
     e.stopPropagation();
     setActionLoading(demandeId);
+    
     try {
       await updateDemandeStatutArtisan(demandeId, nouveauStatut as "EN_COURS" | "TERMINEE");
+      console.log(`✅ Demande ${demandeId} passée en ${nouveauStatut}`);
       await fetchDemandes();
       alert(`✅ Demande ${nouveauStatut === "EN_COURS" ? "en cours" : "terminée"}`);
     } catch (err) {
@@ -206,34 +221,58 @@ const DashboardArtisan = () => {
                   const config = statutConfig[demande.statutDemande] || statutConfig.EN_ATTENTE;
                   const Icon = config.icon;
                   const isActionLoading = actionLoading === demande.id;
-                  const showPhone = demande.statutDemande === "ACCEPTEE";
                   
                   return (
                     <div key={demande.id} className="border rounded-xl p-4 hover:shadow-md transition cursor-pointer" onClick={() => navigate(`/demande/${demande.id}`)}>
                       <div className="flex flex-col md:flex-row justify-between gap-4">
                         <div className="flex-1">
                           <div className="flex items-center gap-2 mb-2 flex-wrap">
-                            <span className={`px-2 py-1 rounded-full text-xs font-medium ${config.bg} ${config.text} border ${config.border}`}><Icon size={12} className="inline mr-1" />{config.label}</span>
-                            <span className="text-xs text-gray-400 flex items-center gap-1"><Calendar size={12} />{new Date(demande.dateRendezVous).toLocaleDateString("fr-FR")}</span>
-                            <span className="text-xs text-gray-400 flex items-center gap-1"><Clock size={12} />{formatHeure(demande.heure)}</span>
+                            <span className={`px-2 py-1 rounded-full text-xs font-medium ${config.bg} ${config.text} border ${config.border}`}>
+                              <Icon size={12} className="inline mr-1" />{config.label}
+                            </span>
+                            <span className="text-xs text-gray-400 flex items-center gap-1">
+                              <Calendar size={12} />{new Date(demande.dateRendezVous).toLocaleDateString("fr-FR")}
+                            </span>
+                            <span className="text-xs text-gray-400 flex items-center gap-1">
+                              <Clock size={12} />{formatHeure(demande.heure)}
+                            </span>
                           </div>
                           <p className="font-semibold text-gray-800">{demande.descriptionTravail}</p>
                           <div className="mt-2 flex flex-wrap gap-3 text-sm text-gray-500">
                             <span className="flex items-center gap-1"><Users size={14} />Client: {demande.clientName} - {demande.clientCommune}</span>
-                            {showPhone && demande.clientNumero && <span className="flex items-center gap-1"><Phone size={12} />{demande.clientNumero}</span>}
+                            {demande.statutDemande === "ACCEPTEE" && demande.clientNumero && (
+                              <span className="flex items-center gap-1 text-green-600"><Phone size={12} />{demande.clientNumero}</span>
+                            )}
                           </div>
                         </div>
                         <div className="flex gap-2">
                           {demande.statutDemande === "EN_ATTENTE" && (
-                            <button onClick={(e) => handleAccepter(demande.id, e)} disabled={isActionLoading} className="flex items-center gap-1 px-3 py-1 bg-green-600 text-white rounded-lg text-sm hover:bg-green-700 transition disabled:opacity-50">
-                              {isActionLoading ? <Loader2 size={14} className="animate-spin" /> : <Check size={14} />} Accepter
+                            <button
+                              onClick={(e) => handleAccepter(demande.id, e)}
+                              disabled={isActionLoading}
+                              className="flex items-center gap-1 px-3 py-1 bg-green-600 text-white rounded-lg text-sm hover:bg-green-700 transition disabled:opacity-50"
+                            >
+                              {isActionLoading ? <Loader2 size={14} className="animate-spin" /> : <Check size={14} />}
+                              Accepter
                             </button>
                           )}
                           {demande.statutDemande === "ACCEPTEE" && (
-                            <button onClick={(e) => handleUpdateStatut(demande.id, "EN_COURS", e)} disabled={isActionLoading} className="px-3 py-1 bg-purple-600 text-white rounded-lg text-sm hover:bg-purple-700 transition">Démarrer</button>
+                            <button
+                              onClick={(e) => handleUpdateStatut(demande.id, "EN_COURS", e)}
+                              disabled={isActionLoading}
+                              className="px-3 py-1 bg-purple-600 text-white rounded-lg text-sm hover:bg-purple-700 transition"
+                            >
+                              Démarrer
+                            </button>
                           )}
                           {demande.statutDemande === "EN_COURS" && (
-                            <button onClick={(e) => handleUpdateStatut(demande.id, "TERMINEE", e)} disabled={isActionLoading} className="px-3 py-1 bg-blue-600 text-white rounded-lg text-sm hover:bg-blue-700 transition">Terminer</button>
+                            <button
+                              onClick={(e) => handleUpdateStatut(demande.id, "TERMINEE", e)}
+                              disabled={isActionLoading}
+                              className="px-3 py-1 bg-blue-600 text-white rounded-lg text-sm hover:bg-blue-700 transition"
+                            >
+                              Terminer
+                            </button>
                           )}
                           <ChevronRight className="text-gray-300" />
                         </div>

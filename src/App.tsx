@@ -1,3 +1,5 @@
+// src/App.tsx
+
 import { Routes, Route } from "react-router-dom";
 import Home from "./pages/Home";
 import Artisans from "./pages/Artisans";
@@ -22,7 +24,7 @@ function App() {
       <Route path="/artisans" element={<Artisans />} />
       <Route path="/artisan/:id" element={<ArtisanProfile />} />
 
-      {/* ========== ROUTES RÉSERVÉES AUX INVITÉS (NON CONNECTÉS) ========== */}
+      {/* ========== ROUTES RÉSERVÉES AUX INVITÉS ========== */}
       <Route
         path="/login"
         element={
@@ -40,7 +42,7 @@ function App() {
         }
       />
 
-      {/* ========== DASHBOARD CLIENT (PROTÉGÉ) ========== */}
+      {/* ========== DASHBOARD CLIENT ========== */}
       <Route
         path="/dashboard-client"
         element={
@@ -50,7 +52,7 @@ function App() {
         }
       />
 
-      {/* ========== DASHBOARD ARTISAN (PROTÉGÉ) ========== */}
+      {/* ========== DASHBOARD ARTISAN ========== */}
       <Route
         path="/dashboard-artisan"
         element={
@@ -60,7 +62,7 @@ function App() {
         }
       />
 
-      {/* ========== DASHBOARD ADMIN (PROTÉGÉ) ========== */}
+      {/* ========== DASHBOARD ADMIN ========== */}
       <Route
         path="/dashboard-admin"
         element={
@@ -70,7 +72,7 @@ function App() {
         }
       />
 
-      {/* ========== PROFIL ARTISAN (MODIFICATION) ========== */}
+      {/* ========== PROFIL ARTISAN ========== */}
       <Route
         path="/profile-artisan"
         element={
@@ -80,7 +82,7 @@ function App() {
         }
       />
 
-      {/* ========== CRÉER UNE DEMANDE (CLIENT UNIQUEMENT) ========== */}
+      {/* ========== CRÉER UNE DEMANDE ========== */}
       <Route
         path="/creer-demande"
         element={
@@ -90,7 +92,7 @@ function App() {
         }
       />
 
-      {/* ========== DÉTAIL D'UNE DEMANDE (CLIENT OU ARTISAN) ========== */}
+      {/* ========== DÉTAIL D'UNE DEMANDE ========== */}
       <Route
         path="/demande/:id"
         element={
@@ -100,7 +102,7 @@ function App() {
         }
       />
 
-      {/* ========== LAISSER UN AVIS (CLIENT UNIQUEMENT) ========== */}
+      {/* ========== LAISSER UN AVIS ========== */}
       <Route
         path="/laisser-avis/:id"
         element={

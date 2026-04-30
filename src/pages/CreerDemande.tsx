@@ -3,13 +3,27 @@ import { useNavigate } from "react-router-dom";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
 import { createDemandeWithPhoto } from "../api/demande.api";
-import { Loader2, AlertCircle, Calendar, FileText, Upload, X, Info, MapPin, User, Phone } from "lucide-react";
+import PaiementWave from "../components/PaiementWave";
+import { 
+  Loader2, 
+  AlertCircle, 
+  Calendar, 
+  FileText, 
+  Upload, 
+  X, 
+  Info, 
+  MapPin, 
+  User,
+  CreditCard
+} from "lucide-react";
 
 const CreerDemande = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+  const [showPayment, setShowPayment] = useState(false);
+  const [paymentCompleted, setPaymentCompleted] = useState(false);
   
   const [form, setForm] = useState({
     date_rendez_vous: "",
@@ -24,8 +38,9 @@ const CreerDemande = () => {
   const clientId = user.id;
   const clientLocalisation = user.localisation || "Abidjan";
   const clientCommune = user.commune || "";
-  const clientTelephone = user.telephone || "";
+  const clientTelephone = user.telephone || "0707070707";
 
+  // Récupérer l'artisan sélectionné
   useEffect(() => {
     const artisanId = localStorage.getItem("selectedArtisanId");
     const artisanName = localStorage.getItem("selectedArtisanName");
@@ -38,6 +53,7 @@ const CreerDemande = () => {
     }
   }, []);
 
+  // Gérer la sélection de photo
   const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
@@ -50,30 +66,34 @@ const CreerDemande = () => {
     }
   };
 
+  // Supprimer la photo
   const removePhoto = () => {
     setPhoto(null);
     setPhotoPreview(null);
   };
 
-  const handleSubmit = async () => {
-    setError("");
-    setSuccess("");
-
+  // Valider le formulaire
+  const validateForm = () => {
     if (!form.date_rendez_vous) {
       setError("Veuillez sélectionner une date");
-      return;
+      return false;
     }
     if (!form.description_travail) {
       setError("Veuillez décrire les travaux");
-      return;
+      return false;
     }
     if (!selectedArtisan) {
       setError("Aucun artisan sélectionné");
-      return;
+      return false;
     }
+    return true;
+  };
 
+  // Créer la demande
+  const handleCreateDemande = async () => {
+    if (!validateForm()) return;
+    
     setLoading(true);
-
     try {
       const demandeData = {
         date_rendez_vous: form.date_rendez_vous,
@@ -84,9 +104,8 @@ const CreerDemande = () => {
         localisation: clientLocalisation,
         telephone: clientTelephone,
       };
-
-      console.log("📤 Envoi de la demande:", demandeData);
       
+      console.log("📤 Envoi de la demande:", demandeData);
       await createDemandeWithPhoto(demandeData, photo || undefined);
       
       localStorage.removeItem("selectedArtisanId");
@@ -106,6 +125,33 @@ const CreerDemande = () => {
     }
   };
 
+  // Paiement réussi
+  const handlePaymentSuccess = () => {
+    setPaymentCompleted(true);
+    handleCreateDemande();
+  };
+
+  // Si le paiement est en cours, afficher le composant de paiement
+  if (showPayment && !paymentCompleted) {
+    return (
+      <>
+        <Navbar brand="ArtisanCI" links={[]} />
+        <div className="min-h-screen bg-gray-50 py-12">
+          <div className="max-w-md mx-auto px-6">
+            <PaiementWave
+              montant={5000}
+              description={`Travaux: ${form.description_travail.substring(0, 50)}...`}
+              telephone={clientTelephone}
+              onSuccess={handlePaymentSuccess}
+              onCancel={() => setShowPayment(false)}
+            />
+          </div>
+        </div>
+        <Footer />
+      </>
+    );
+  }
+
   return (
     <>
       <Navbar
@@ -120,6 +166,7 @@ const CreerDemande = () => {
 
       <div className="min-h-screen bg-gray-50 py-12">
         <div className="max-w-2xl mx-auto px-6">
+          
           <div className="mb-8">
             <button
               onClick={() => navigate("/artisans")}
@@ -151,6 +198,7 @@ const CreerDemande = () => {
                 </div>
               )}
 
+              {/* Artisan sélectionné */}
               {selectedArtisan && (
                 <div className="mb-6 p-4 bg-blue-50 rounded-xl border border-blue-100">
                   <p className="text-sm text-blue-700 flex items-center gap-2">
@@ -160,20 +208,16 @@ const CreerDemande = () => {
                 </div>
               )}
 
+              {/* Localisation */}
               <div className="mb-6 p-4 bg-green-50 rounded-xl border border-green-100">
                 <p className="text-sm text-green-700 flex items-center gap-2">
                   <MapPin size={16} />
                   Votre localisation : <strong>{clientCommune ? `${clientCommune}, ` : ""}{clientLocalisation}</strong>
                 </p>
-                {clientTelephone && (
-                  <p className="text-sm text-green-700 flex items-center gap-2 mt-2">
-                    <Phone size={16} />
-                    Téléphone : <strong>{clientTelephone}</strong>
-                  </p>
-                )}
               </div>
 
               <form className="space-y-5" onSubmit={(e) => e.preventDefault()}>
+                {/* Date du rendez-vous */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1 flex items-center gap-2">
                     <Calendar size={16} /> Date du rendez-vous *
@@ -187,6 +231,7 @@ const CreerDemande = () => {
                   />
                 </div>
 
+                {/* Description des travaux */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1 flex items-center gap-2">
                     <FileText size={16} /> Description des travaux *
@@ -201,6 +246,7 @@ const CreerDemande = () => {
                   />
                 </div>
 
+                {/* Photo optionnelle */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1 flex items-center gap-2">
                     <Upload size={16} /> Photo (optionnelle)
@@ -209,10 +255,19 @@ const CreerDemande = () => {
                     <label className="cursor-pointer bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2.5 rounded-xl transition flex items-center gap-2">
                       <Upload size={16} />
                       Choisir une photo
-                      <input type="file" accept="image/*" onChange={handlePhotoChange} className="hidden" />
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={handlePhotoChange}
+                        className="hidden"
+                      />
                     </label>
                     {photo && (
-                      <button type="button" onClick={removePhoto} className="text-red-500 hover:text-red-700 text-sm flex items-center gap-1">
+                      <button
+                        type="button"
+                        onClick={removePhoto}
+                        className="text-red-500 hover:text-red-700 text-sm flex items-center gap-1"
+                      >
                         <X size={16} /> Supprimer
                       </button>
                     )}
@@ -224,22 +279,27 @@ const CreerDemande = () => {
                   )}
                 </div>
 
+                {/* Bouton Payer */}
                 <button
                   type="button"
-                  onClick={handleSubmit}
-                  disabled={loading}
-                  className="w-full bg-gradient-to-r from-blue-600 to-blue-700 text-white py-3 rounded-xl font-semibold hover:from-blue-700 hover:to-blue-800 transition disabled:opacity-70 flex items-center justify-center gap-2 mt-6"
+                  onClick={() => setShowPayment(true)}
+                  disabled={loading || !selectedArtisan}
+                  className="w-full bg-gradient-to-r from-green-600 to-green-700 text-white py-3 rounded-xl font-semibold hover:from-green-700 hover:to-green-800 transition disabled:opacity-70 flex items-center justify-center gap-2 mt-6"
                 >
-                  {loading ? <><Loader2 size={18} className="animate-spin" /> Envoi en cours...</> : "Envoyer la demande"}
+                  <CreditCard size={18} />
+                  Payer 5 000 FCFA et envoyer la demande
                 </button>
               </form>
 
+              {/* Information supplémentaire */}
               <div className="mt-6 p-4 bg-gray-50 rounded-xl border border-gray-100">
                 <div className="flex items-start gap-3">
                   <Info size={18} className="text-blue-500 mt-0.5" />
                   <div>
                     <p className="text-sm font-medium text-gray-700">Comment ça marche ?</p>
-                    <p className="text-xs text-gray-500 mt-1">Votre demande sera envoyée à l'artisan sélectionné.</p>
+                    <p className="text-xs text-gray-500 mt-1">
+                      Effectuez le paiement sécurisé via Wave. Une fois payé, votre demande sera immédiatement envoyée à l'artisan.
+                    </p>
                   </div>
                 </div>
               </div>
@@ -247,6 +307,7 @@ const CreerDemande = () => {
           </div>
         </div>
       </div>
+
       <Footer />
     </>
   );

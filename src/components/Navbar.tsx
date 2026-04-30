@@ -1,6 +1,8 @@
+// src/components/Navbar.tsx
+
 import { useNavigate, useLocation } from "react-router-dom";
 import { useState, useEffect } from "react";
-import { User, LogOut, LayoutDashboard, Settings, ChevronDown } from "lucide-react";
+import { User, LogOut, LayoutDashboard, Settings, ChevronDown, Briefcase } from "lucide-react";
 
 type NavItem = {
   label: string;
@@ -20,13 +22,15 @@ const Navbar = ({ brand, links, showAuthButtons = true }: NavbarProps) => {
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [user, setUser] = useState<any>(null);
   const [token, setToken] = useState<string | null>(null);
+  const [userRole, setUserRole] = useState<string | null>(null);
 
-  // Récupérer les infos utilisateur depuis localStorage
   useEffect(() => {
     const storedToken = localStorage.getItem("token");
     const storedUser = localStorage.getItem("user");
+    const role = localStorage.getItem("role");
     
     setToken(storedToken);
+    setUserRole(role);
     
     if (storedUser) {
       try {
@@ -35,18 +39,14 @@ const Navbar = ({ brand, links, showAuthButtons = true }: NavbarProps) => {
         console.error("Erreur parsing user", e);
       }
     }
-  }, [location.pathname]); // Re-vérifie quand la route change
+  }, [location.pathname]);
 
   const handleNavigation = (link: NavItem) => {
-    // navigation vers une autre page
     if (link.path) {
       navigate(link.path);
       return;
     }
-
-    // navigation vers une section
     if (link.targetId) {
-      // si on n'est pas sur la home
       if (location.pathname !== "/") {
         navigate("/");
         setTimeout(() => {
@@ -74,12 +74,47 @@ const Navbar = ({ brand, links, showAuthButtons = true }: NavbarProps) => {
   };
 
   const getDashboardPath = () => {
-    const role = localStorage.getItem("role");
-    if (role === "ARTISAN") return "/dashboard-artisan";
-    if (role === "CLIENT") return "/dashboard-client";
-    if (role === "ADMIN") return "/dashboard-admin";
+    if (userRole === "ARTISAN") return "/dashboard-artisan";
+    if (userRole === "CLIENT") return "/dashboard-client";
+    if (userRole === "ADMIN") return "/dashboard-admin";
     return "/";
   };
+
+  // ✅ Définition des liens selon le rôle
+  const getNavLinks = (): NavItem[] => {
+    // Si l'utilisateur n'est pas connecté, afficher les liens par défaut
+    if (!token) {
+      return links;
+    }
+    
+    // Si l'utilisateur est connecté, adapter les liens selon son rôle
+    if (userRole === "ARTISAN") {
+      return [
+        { label: "Accueil", path: "/" },
+        { label: "Mes demandes", path: "/dashboard-artisan" },
+        { label: "Mon profil", path: "/profile-artisan" },
+      ];
+    }
+    
+    if (userRole === "CLIENT") {
+      return [
+        { label: "Accueil", path: "/" },
+        { label: "Trouver un artisan", path: "/artisans" },
+        { label: "Mes demandes", path: "/dashboard-client" },
+      ];
+    }
+    
+    if (userRole === "ADMIN") {
+      return [
+        { label: "Accueil", path: "/" },
+        { label: "Dashboard", path: "/dashboard-admin" },
+      ];
+    }
+    
+    return links;
+  };
+
+  const navLinks = getNavLinks();
 
   return (
     <header className="w-full bg-white border-b sticky top-0 z-50">
@@ -98,9 +133,9 @@ const Navbar = ({ brand, links, showAuthButtons = true }: NavbarProps) => {
           </span>
         </div>
 
-        {/* Navigation */}
+        {/* Navigation - liens adaptés au rôle */}
         <nav className="hidden md:flex items-center gap-8 text-gray-700 font-medium">
-          {links.map((link) => (
+          {navLinks.map((link) => (
             <button
               key={link.label}
               onClick={() => handleNavigation(link)}
@@ -155,7 +190,7 @@ const Navbar = ({ brand, links, showAuthButtons = true }: NavbarProps) => {
                     {user?.prenom} {user?.nom}
                   </p>
                   <p className="text-xs text-gray-500">
-                    {localStorage.getItem("role") === "ARTISAN" ? "Artisan" : "Client"}
+                    {userRole === "ARTISAN" ? "Artisan" : userRole === "CLIENT" ? "Client" : "Admin"}
                   </p>
                 </div>
                 
@@ -186,26 +221,29 @@ const Navbar = ({ brand, links, showAuthButtons = true }: NavbarProps) => {
                     Tableau de bord
                   </button>
 
-                  <button
-                    onClick={() => {
-                      setDropdownOpen(false);
-                      navigate("/profile");
-                    }}
-                    className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition"
-                  >
-                    <User size={16} className="text-gray-400" />
-                    Mon profil
-                  </button>
+                  {/* Trouver un artisan - visible seulement pour le client */}
+                  {userRole === "CLIENT" && (
+                    <button
+                      onClick={() => {
+                        setDropdownOpen(false);
+                        navigate("/artisans");
+                      }}
+                      className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition"
+                    >
+                      <Briefcase size={16} className="text-gray-400" />
+                      Trouver un artisan
+                    </button>
+                  )}
 
                   <button
                     onClick={() => {
                       setDropdownOpen(false);
-                      navigate("/artisans");
+                      navigate("/profile-artisan");
                     }}
                     className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition"
                   >
                     <Settings size={16} className="text-gray-400" />
-                    Trouver un artisan
+                    Mon profil
                   </button>
 
                   <div className="border-t border-gray-100 my-1"></div>

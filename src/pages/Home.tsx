@@ -1,3 +1,5 @@
+// src/pages/Home.tsx
+
 import { useNavigate } from "react-router-dom";
 import Navbar from "../components/Navbar";
 import Hero from "../components/Hero";
@@ -35,6 +37,7 @@ import {
 const Home = () => {
   const navigate = useNavigate();
 
+  // Services statiques (peuvent être rendus dynamiques plus tard)
   const services: Service[] = [
     { id: 1, name: "Plomberie", artisansCount: 234, icon: <Droplet color="white" />, color: "#3B82F6" },
     { id: 2, name: "Serrurerie", artisansCount: 156, icon: <Key color="white" />, color: "#F59E0B" },
@@ -66,9 +69,10 @@ const Home = () => {
 
   return (
     <>
-      
       <div id="top" />
 
+      {/* Navbar - les liens sont pour les visiteurs non connectés */}
+      {/* La Navbar elle-même gère l'affichage selon le rôle connecté */}
       <Navbar
         brand="ArtisanCI"
         links={[
@@ -83,32 +87,31 @@ const Home = () => {
       <div className="pt-2">
         <Hero
           title="Trouvez l’artisan qu’il vous faut"
-          subtitle="Plombiers, serruriers, électriciens, peintres… Des professionnels qualifiés près de chez vous"
+          subtitle="Plombiers, électriciens, peintres... Des professionnels qualifiés près de chez vous"
           popularSearches={["Plomberie", "Serrurerie", "Électricité"]}
           onSearch={(value) => navigate(`/artisans?search=${value}`)}
         />
       </div>
 
-      {/* SERVICES */}
+      {/* SERVICES - Non cliquables (simple présentation) */}
       <section id="services" className="scroll-mt-24 py-12">
         <ServicesSection
           title="Tous les services dont vous avez besoin"
           services={services}
-          onServiceClick={(s) => navigate(`/artisans?service=${s.name}`)}
         />
       </section>
 
-      {/* comment ça marche ? */}
+      {/* Comment ça marche */}
       <section id="how-it-works" className="scroll-mt-24 py-12">
         <HowItWorksSection title="Comment ça marche ?" steps={steps} />
       </section>
 
-      {/* STATS */}
+      {/* Statistiques */}
       <section className="py-12">
         <StatsSection stats={stats} />
       </section>
 
-      {/* FOOTER / CONTACT */}
+      {/* Footer / Contact */}
       <section id="contact" className="scroll-mt-24 pt-8">
         <Footer />
       </section>
