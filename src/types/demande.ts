@@ -2,14 +2,13 @@
 
 // ========== CRÉATION D'UNE DEMANDE ==========
 
+// Le client crée une demande (sans artisanId, car l'artisan choisit après)
 export interface CreateDemandeData {
-  date_rendez_vous: string;      // YYYY-MM-DD
+  date_rendez_vous: string;   // YYYY-MM-DD
+  heure?: string;             // HH:mm:ss (optionnel)
   description_travail: string;
   clientId: number;
-  artisanId: number;              // ID de l'artisan sélectionné
-  commune?: string;               // Commune du client
-  localisation?: string;          // Ville du client
-  telephone?: string;             // Téléphone du client
+  artisanId?: number | null;  // Ajouté pour l'assignation directe
 }
 
 // ========== RÉPONSES API ==========
@@ -23,13 +22,16 @@ export interface DemandeClientResponse {
   heure: string;
   clientId: number;
   clientName: string;
+  clientNumero: string;
   artisanId?: number;
   artisanName?: string;
   clientCommune?: string;
-  clientTelephone?: string;       // Masqué tant que non acceptée (alias clientNumero)
-  artisanTelephone?: string;      // Masqué tant que non acceptée (alias artisanNumero)
-  peutCommenter?: boolean;        // Si la demande est terminée et non commentée
-  commentaireId?: number;         // ID du commentaire si déjà laissé
+  clientTelephone?: string;
+  artisanTelephone?: string;
+  photoUrl?: string | null;       // URL Cloudinary
+  photo_url?: string | null;      // Fallback snake_case
+  peutCommenter?: boolean;
+  commentaireId?: number;
 }
 
 // Réponse pour l'artisan (dashboard artisan)
@@ -38,19 +40,16 @@ export interface DemandeArtisanResponse {
   dateRendezVous: string;
   descriptionTravail: string;
   statutDemande: "EN_ATTENTE" | "ACCEPTEE" | "EN_COURS" | "TERMINEE" | "REFUSEE";
-  heure: {
-    hour: number;
-    minute: number;
-    second: number;
-    nano: number;
-  };
   clientId: number;
   clientName: string;
+  clientNumero: string;
   clientCommune: string;
-  clientTelephone?: string;       // Masqué tant que non acceptée
-  artisanId: number;
-  artisanName: string;
-  artisanTelephone?: string;      // Masqué tant que non acceptée
+  clientTelephone?: string;
+  artisanId: number | null;
+  artisanName: string | null;
+  artisanTelephone?: string;
+  photoUrl?: string | null;
+  photo_url?: string | null;      // Fallback snake_case
 }
 
 // Réponse détaillée (page de détail)
@@ -65,11 +64,14 @@ export interface DemandeResponse {
   heure?: string;
   clientId?: number;
   clientName?: string;
+  clientNumero?: string;
   clientCommune?: string;
   clientTelephone?: string;
   artisanTelephone?: string;
-  artisanId?: number;
-  artisanName?: string;
+  artisanId?: number | null;
+  artisanName?: string | null;
+  photoUrl?: string | null;
+  photo_url?: string | null;      // Fallback snake_case
   client?: {
     id: number;
     nom: string;

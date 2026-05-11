@@ -2,7 +2,9 @@ import api from "./axios";
 import type { AdminDemande, AdminClient, AdminArtisan, AdminClientsResponse, AdminArtisansResponse, StatutDemande } from "../types/admin";
 
 // Demandes
-export const updateDemandeStatut = (id: number, statut: StatutDemande): Promise<{ message: string }> => api.put(`/admin/demandes/${id}/statut`, statut).then(res => res.data);
+export const updateDemandeStatut = (id: number, statut: StatutDemande): Promise<{ message: string }> => api.put(`/admin/demandes/${id}/statut`, `"${statut}"`, {
+  headers: { "Content-Type": "application/json" }
+}).then(res => res.data);
 export const getAdminDemandes = (page = 0, size = 10): Promise<AdminDemande[]> => api.get(`/admin/demandes?page=${page}&size=${size}`).then(res => res.data);
 export const getAdminDemandeById = (id: number): Promise<AdminDemande> => api.get(`/admin/demandes/${id}`).then(res => res.data);
 export const deleteAdminDemande = (id: number): Promise<{ message: string }> => api.delete(`/admin/demandes/${id}`).then(res => res.data);

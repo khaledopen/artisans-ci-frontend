@@ -31,7 +31,7 @@ export const getArtisanByIdAuto = async (id: number): Promise<Artisan> => {
     const data = await api.get(`/artisans/details/${id}`).then(res => res.data);
     return data;
   } catch (err) {
-    console.log("⚠️ /details/ a échoué, tentative avec /artisans/${id}");
+    console.log(`⚠️ /details/ a échoué, tentative avec /artisans/${id}`);
     // Fallback sans /details/
     return await api.get(`/artisans/${id}`).then(res => res.data);
   }
@@ -46,5 +46,5 @@ export const updateArtisanProfile = (data: UpdateArtisanProfileData): Promise<Ar
 // ========== FILTRAGE ==========
 
 export const filterArtisans = (data: FilterArtisansData): Promise<Artisan[]> => {
-  return api.post("/artisans/filter", data).then(res => res.data);
+  return api.get("/artisans/filter", { params: data }).then(res => res.data);
 };

@@ -8,9 +8,11 @@ export interface AdminDemande {
   heure: string | null;
   clientId: number;
   clientName: string;
+  clientNumero?: string;
   clientCommune?: string;
   artisanId?: number | null;
   artisanName?: string | null;
+  photoUrl?: string | null;
   createdAt?: string;
 }
 

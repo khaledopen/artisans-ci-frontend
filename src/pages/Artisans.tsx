@@ -20,21 +20,49 @@ const calculateDistance = (lat1: number, lon1: number, lat2: number, lon2: numbe
   return R * c;
 };
 
-// Fonction pour convertir une adresse en coordonnées (geocoding)
+// Cache pour éviter de refaire les mêmes requêtes de geocoding
+const geocodingCache: Record<string, { lat: number; lng: number } | null> = {};
+
+// Fonction utilitaire pour attendre (delay)
+const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+
+// Fonction pour convertir une adresse en coordonnées (geocoding) avec cache et respect des limites
 const geocodeAddress = async (address: string): Promise<{ lat: number; lng: number } | null> => {
   if (!address) return null;
+  
+  // Vérifier le cache d'abord
+  if (geocodingCache[address] !== undefined) {
+    return geocodingCache[address];
+  }
+
   try {
     const res = await fetch(
-      `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(address)}&limit=1`
+      `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(address)}&limit=1`,
+      {
+        headers: {
+          'Accept-Language': 'fr'
+        }
+      }
     );
+
+    if (res.status === 429) {
+      console.warn("Rate limit atteint pour Nominatim, attente...");
+      return null;
+    }
+
     const data = await res.json();
+    let result = null;
+    
     if (data && data.length > 0) {
-      return {
+      result = {
         lat: parseFloat(data[0].lat),
         lng: parseFloat(data[0].lon)
       };
     }
-    return null;
+    
+    // Mettre en cache (même si null pour ne pas retenter inutilement)
+    geocodingCache[address] = result;
+    return result;
   } catch (error) {
     console.error("Erreur geocoding:", error);
     return null;
@@ -132,6 +160,7 @@ const Artisans = () => {
   // Surveillance position en temps réel
   useEffect(() => {
     let watchId: number | null = null;
+    let lastGeocodeTime = 0;
     
     if (navigator.geolocation) {
       watchId = navigator.geolocation.watchPosition(
@@ -139,7 +168,15 @@ const Artisans = () => {
           const lat = position.coords.latitude;
           const lng = position.coords.longitude;
           
+          // Ne mettre à jour l'adresse textuelle que toutes les 30 secondes pour éviter le spam API
+          const now = Date.now();
+          if (now - lastGeocodeTime < 30000) {
+            setUserLocation(prev => ({ ...prev, lat, lng, loading: false } as any));
+            return;
+          }
+
           try {
+            lastGeocodeTime = now;
             const res = await fetch(
               `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`
             );
@@ -171,11 +208,22 @@ const Artisans = () => {
       setArtisans(data.content || []);
       
       const coordsMap = new Map();
+      const artisansToFetch = (data.content || []).filter((a: any) => 
+        (a.localisation || a.commune) && !geocodingCache[`${a.localisation || ""} ${a.commune || ""}`.trim()]
+      );
+
+      // Traiter un artisan à la fois avec un délai si pas en cache
       for (const artisan of (data.content || [])) {
         const artisanAddress = `${artisan.localisation || ""} ${artisan.commune || ""}`.trim();
         if (artisanAddress) {
+          const isNew = !geocodingCache[artisanAddress];
           const coords = await geocodeAddress(artisanAddress);
           if (coords) coordsMap.set(artisan.id, coords);
+          
+          // Si c'était une nouvelle requête, on attend 1s pour respecter la policy Nominatim
+          if (isNew && artisansToFetch.length > 1) {
+            await sleep(1000);
+          }
         }
       }
       setArtisansCoords(coordsMap);
@@ -191,24 +239,36 @@ const Artisans = () => {
   const applyFilters = async () => {
     setIsFiltering(true);
     try {
-      const hasFilters = filters.metierId || filters.commune;
+      // Nettoyage des filtres : ne pas envoyer de chaînes vides
+      const cleanFilters: FilterArtisansData = {};
+      if (filters.metierId) cleanFilters.metierId = Number(filters.metierId);
+      if (filters.commune?.trim()) cleanFilters.commune = filters.commune.trim();
+
+      const hasFilters = Object.keys(cleanFilters).length > 0;
       let data;
       
       if (hasFilters) {
-        data = await filterArtisans(filters);
-        setArtisans(Array.isArray(data) ? data : []);
+        console.log("📡 Filtrage avec:", cleanFilters);
+        const response = await filterArtisans(cleanFilters);
+        // On gère les deux cas : soit une liste directe [], soit un objet { content: [] }
+        data = Array.isArray(response) ? response : (response as any).content || [];
       } else {
         const freshData = await getArtisans(0, 100);
-        setArtisans(freshData.content || []);
+        data = freshData.content || [];
       }
       
-      // Re-géocoder les artisans filtrés
+      setArtisans(data);
+      
+      // Re-géocoder les artisans
       const coordsMap = new Map();
-      for (const artisan of (Array.isArray(data) ? data : [])) {
+      for (const artisan of data) {
         const artisanAddress = `${artisan.localisation || ""} ${artisan.commune || ""}`.trim();
         if (artisanAddress) {
+          const isNew = !geocodingCache[artisanAddress];
           const coords = await geocodeAddress(artisanAddress);
           if (coords) coordsMap.set(artisan.id, coords);
+          
+          if (isNew) await sleep(1000);
         }
       }
       setArtisansCoords(coordsMap);

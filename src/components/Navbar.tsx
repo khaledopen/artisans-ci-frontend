@@ -235,16 +235,18 @@ const Navbar = ({ brand, links, showAuthButtons = true }: NavbarProps) => {
                     </button>
                   )}
 
-                  <button
-                    onClick={() => {
-                      setDropdownOpen(false);
-                      navigate("/profile-artisan");
-                    }}
-                    className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition"
-                  >
-                    <Settings size={16} className="text-gray-400" />
-                    Mon profil
-                  </button>
+                  {userRole === "ARTISAN" && (
+                    <button
+                      onClick={() => {
+                        setDropdownOpen(false);
+                        navigate("/profile-artisan");
+                      }}
+                      className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition"
+                    >
+                      <Settings size={16} className="text-gray-400" />
+                      Mon profil
+                    </button>
+                  )}
 
                   <div className="border-t border-gray-100 my-1"></div>
 

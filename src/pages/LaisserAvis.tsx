@@ -63,6 +63,7 @@ const LaisserAvis = () => {
         commentaire: commentaire.trim(),
         clientId: clientId,
         artisanId: demande?.artisanId || demande?.artisan?.id,
+        note: note,
         photo: photo || undefined,
         demandeId: parseInt(id!),
       });
@@ -91,7 +92,7 @@ const LaisserAvis = () => {
     );
   }
 
-  const artisanName = demande?.artisanName || demande?.artisan?.prenom + " " + demande?.artisan?.nom || "l'artisan";
+  const artisanName = demande?.artisanName || (demande?.artisan ? `${demande.artisan.prenom} ${demande.artisan.nom}` : "l'artisan");
   const artisanId = demande?.artisanId || demande?.artisan?.id;
 
   return (

@@ -15,16 +15,51 @@ import {
   LogOut,
   Wrench,
   Star,
+  Phone,
 } from "lucide-react";
 import { getMe } from "../api/auth.api";
-import { getDemandesByClientId } from "../api/demande.api";
+import { getDemandesByClientId, getDemandePhotoUrl, fetchDemandePhotoBlob } from "../api/demande.api";
 import type { DemandeClientResponse } from "../types/demande";
 
 const statutConfig: Record<string, { label: string; bg: string; text: string; border: string; icon: any }> = {
   EN_ATTENTE: { label: "En attente", bg: "bg-amber-50", text: "text-amber-700", border: "border-amber-200", icon: Clock },
   ACCEPTEE: { label: "Acceptée", bg: "bg-blue-50", text: "text-blue-700", border: "border-blue-200", icon: CheckCircle },
+  EN_COURS: { label: "En cours", bg: "bg-purple-50", text: "text-purple-700", border: "border-purple-200", icon: Clock },
   TERMINEE: { label: "Terminée", bg: "bg-green-50", text: "text-green-700", border: "border-green-200", icon: CheckCircle },
   REFUSEE: { label: "Refusée", bg: "bg-red-50", text: "text-red-600", border: "border-red-200", icon: XCircle },
+};
+
+const ProtectedImage = ({ src, alt, className }: { src: string; alt: string; className?: string }) => {
+  const [imgSrc, setImgSrc] = useState<string | null>(null);
+  const [error, setError] = useState(false);
+
+  useEffect(() => {
+    if (src.includes("cloudinary") || src.startsWith("blob:") || src.startsWith("data:")) {
+      setImgSrc(src);
+      return;
+    }
+
+    const loadProtectedImage = async () => {
+      try {
+        const match = src.match(/\/demandes\/(\d+)\/photo/);
+        if (match) {
+          const id = parseInt(match[1]);
+          const blobUrl = await fetchDemandePhotoBlob(id);
+          setImgSrc(blobUrl);
+        } else {
+          setImgSrc(src);
+        }
+      } catch (err) {
+        setError(true);
+      }
+    };
+
+    loadProtectedImage();
+  }, [src]);
+
+  if (error || !imgSrc) return <div className={`${className} bg-gray-100 flex items-center justify-center`}><Search size={16} className="text-gray-300" /></div>;
+
+  return <img src={imgSrc} alt={alt} className={className} />;
 };
 
 const DashboardClient = () => {
@@ -288,7 +323,8 @@ const DashboardClient = () => {
                 {demandesFiltrees.map((demande) => {
                   const config = getStatutConfig(demande);
                   const Icon = config.icon;
-                  const peutCommenter = getStatut(demande) === "TERMINEE" && !(demande as any).commentaireId;
+                  const peutCommenter = demande.peutCommenter ?? (getStatut(demande) === "TERMINEE" && !demande.commentaireId);
+                  const artisanPhone = (demande as any).artisanTelephone || (demande as any).artisan_telephone;
                   
                   return (
                     <div
@@ -313,13 +349,32 @@ const DashboardClient = () => {
                               </span>
                             )}
                           </div>
-                          <p className="font-semibold text-gray-800">{demande.descriptionTravail}</p>
-                          {(demande as any).artisanName && (
-                            <p className="text-sm text-gray-500 mt-1 flex items-center gap-1">
-                              <Wrench size={14} />
-                              Artisan: {(demande as any).artisanName}
-                            </p>
-                          )}
+
+                          <div className="flex items-start gap-4">
+                            {/* Photo de la panne */}
+                            <ProtectedImage 
+                              src={demande.photoUrl || (demande as any).photo_url || getDemandePhotoUrl(demande.id)} 
+                              alt="Panne" 
+                              className="w-16 h-16 rounded-lg object-cover border border-gray-100 flex-shrink-0"
+                            />
+                            <div>
+                              <p className="font-semibold text-gray-800">{demande.descriptionTravail}</p>
+                              {(demande as any).artisanName && (
+                                <div className="mt-1">
+                                  <p className="text-sm text-gray-500 flex items-center gap-1">
+                                    <Wrench size={14} />
+                                    Artisan: {(demande as any).artisanName}
+                                  </p>
+                                  {artisanPhone && (
+                                    <p className="text-sm text-blue-600 flex items-center gap-1 font-medium">
+                                      <Phone size={12} />
+                                      {artisanPhone}
+                                    </p>
+                                  )}
+                                </div>
+                              )}
+                            </div>
+                          </div>
                         </div>
                         <div className="flex items-center gap-3">
                           {peutCommenter && (

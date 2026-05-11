@@ -12,6 +12,7 @@ const GuestRoute = ({ children }: GuestRouteProps) => {
     const role = localStorage.getItem("role");
     if (role === "ARTISAN") return <Navigate to="/dashboard-artisan" />;
     if (role === "CLIENT") return <Navigate to="/dashboard-client" />;
+    if (role === "ADMIN") return <Navigate to="/dashboard-admin" />;
     return <Navigate to="/" />;
   }
 
